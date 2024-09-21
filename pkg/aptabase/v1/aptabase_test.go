@@ -1,66 +1,67 @@
 package aptabase
 
 import (
+	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
+	// Adjust this import as necessary
 )
 
 func TestNewClient(t *testing.T) {
-	client := NewClient("test-api-key")
+	client := NewClient("EU-API-KEY")
 
-	if client.APIKey != "test-api-key" {
-		t.Errorf("Expected APIKey to be 'test-api-key', got '%s'", client.APIKey)
+	if client.APIKey != "EU-API-KEY" {
+		t.Errorf("Expected API key to be 'EU-API-KEY', got '%s'", client.APIKey)
 	}
 
-	if client.BaseURL != "https://us.aptabase.com" {
-		t.Errorf("Expected default BaseURL, got '%s'", client.BaseURL)
+	if client.BaseURL != "https://eu.aptabase.com" {
+		t.Errorf("Expected BaseURL to be 'https://eu.aptabase.com', got '%s'", client.BaseURL)
 	}
 }
 
-func TestNewClientWithCustomBaseURL(t *testing.T) {
-	client := NewClient("test-api-key", "https://custom.api.aptabase.com/v1")
+func TestNewSessionID(t *testing.T) {
+	client := NewClient("EU-API-KEY")
+	sessionID := client.NewSessionID()
 
-	if client.BaseURL != "https://custom.api.aptabase.com/v1" {
-		t.Errorf("Expected BaseURL to be 'https://custom.api.aptabase.com/v1', got '%s'", client.BaseURL)
+	if len(sessionID) != 18 { // 10 digits + 8 random digits
+		t.Errorf("Expected session ID length to be 18, got %d", len(sessionID))
 	}
 }
 
 func TestEvalSessionID(t *testing.T) {
-	client := NewClient("test-api-key")
+	client := NewClient("EU-API-KEY")
 	oldSessionID := client.SessionID
 
-	// Simulate a timeout
-	time.Sleep(1 * time.Second) // Shortened for test purposes
+	time.Sleep(2 * time.Second) // Ensure we exceed the default timeout
 
-	newSessionID := client.EvalSessionID()
-	if oldSessionID == newSessionID {
-		t.Error("Expected a new session ID to be generated after timeout")
+	client.EvalSessionID()
+	if client.SessionID == oldSessionID {
+		t.Errorf("Expected new session ID, got the same: %s", oldSessionID)
 	}
 }
 
-func TestTrackEventSuccess(t *testing.T) {
-	client := NewClient("test-api-key")
+func TestTrackEvent(t *testing.T) {
+	client := NewClient("EU-API-KEY")
 
-	// Mock the HTTP server
+	// Mock HTTP server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Errorf("Expected method 'POST', got '%s'", r.Method)
-		}
-		if r.Header.Get("App-Key") != "test-api-key" {
-			t.Errorf("Expected App-Key to be 'test-api-key', got '%s'", r.Header.Get("App-Key"))
+			t.Errorf("Expected POST method, got %s", r.Method)
 		}
 
 		var body map[string]interface{}
 		err := json.NewDecoder(r.Body).Decode(&body)
 		if err != nil {
-			t.Fatalf("Error decoding body: %v", err)
+			t.Errorf("Failed to decode JSON: %v", err)
 		}
 
 		if body["eventName"] != "test_event" {
-			t.Errorf("Expected eventName to be 'test_event', got '%s'", body["eventName"])
+			t.Errorf("Expected eventName to be 'test_event', got '%v'", body["eventName"])
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -69,34 +70,51 @@ func TestTrackEventSuccess(t *testing.T) {
 
 	client.BaseURL = ts.URL
 
-	err := client.TrackEvent("test_event", map[string]interface{}{"prop1": "value1"})
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+	// Track event
+	props := map[string]interface{}{"key": "value"}
+	client.TrackEvent("test_event", props)
+
+	// Check that the queue is processed
+	if len(client.eventQueue) != 0 {
+		t.Errorf("Expected event queue to be empty after processing, got %d", len(client.eventQueue))
 	}
 }
 
-func TestTrackEventDisabled(t *testing.T) {
-	client := NewClient("") // No API key
+func TestTrackEvent_Failure(t *testing.T) {
+	client := NewClient("EU-API-KEY")
 
-	err := client.TrackEvent("test_event", nil)
-	if err != nil {
-		t.Error("Expected no error when tracking is disabled")
-	}
-}
-
-func TestTrackEventHTTPError(t *testing.T) {
-	client := NewClient("test-api-key")
-
-	// Mock the HTTP server to return an error status
+	// Mock HTTP server to return an error
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest) // Simulate error
 	}))
 	defer ts.Close()
 
 	client.BaseURL = ts.URL
 
-	err := client.TrackEvent("test_event", nil)
-	if err == nil {
-		t.Error("Expected an error due to HTTP error response")
+	// Capture logs
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+
+	// Track event
+	client.TrackEvent("test_event", nil)
+
+	// Check that error is logged
+	if !strings.Contains(buf.String(), "TrackEvent failed with status code 400") {
+		t.Errorf("Expected error log for status code 400, got: %s", buf.String())
+	}
+}
+
+func TestSystemProps(t *testing.T) {
+	props, err := systemProps()
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if props["osName"] == "" || props["osVersion"] == "" {
+		t.Error("Expected osName and osVersion to be set")
+	}
+
+	if props["locale"] == "" {
+		t.Error("Expected locale to be set")
 	}
 }

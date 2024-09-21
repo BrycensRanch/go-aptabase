@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/brycensranch/go-aptabase/pkg/osinfo/v1" // Import your osinfo package
@@ -27,6 +29,8 @@ type Client struct {
 	SessionID      string        // Public field
 	LastTouch      time.Time     // Public field
 	SessionTimeout time.Duration // Public field
+	eventQueue     []map[string]interface{}
+	mu             sync.Mutex
 }
 
 // NewClient creates a new Client with the specified API key and optional base URL.
@@ -35,24 +39,34 @@ func NewClient(apiKey string, baseURL ...string) *Client {
 		APIKey:         apiKey,
 		HTTPClient:     &http.Client{Timeout: 10 * time.Second},
 		SessionTimeout: 1 * time.Hour, // default session timeout
+		eventQueue:     []map[string]interface{}{},
 	}
 
-	// Set the BaseURL based on the specified region
-	if url, exists := hosts["US"]; exists {
-		client.BaseURL = url
+	// Determine the host from the App-Key
+	if apiKeyContains := func() string {
+		if contains(apiKey, "EU") {
+			return "EU"
+		}
+		return "US" // Default to US if "EU" is not found
+	}(); apiKeyContains != "" {
+		client.BaseURL = hosts[apiKeyContains]
 	} else {
-		client.BaseURL = hosts["US"] // Default to US if region not found
+		client.BaseURL = hosts["US"] // Fallback if no valid region found
 	}
 
 	client.SessionID = client.NewSessionID()
 	client.LastTouch = time.Now().UTC()
 
+	go client.processQueue() // Start the queue processing in a goroutine
+
 	return client
 }
 
-// NewSessionID generates a new session ID (you can use a better method here).
+// NewSessionID generates a new session ID in the format of epochInSeconds + 8 random numbers.
 func (c *Client) NewSessionID() string {
-	return RandomString()
+	epochSeconds := time.Now().UTC().Unix()
+	randomNumber := rand.Intn(100000000) // Generates a random number between 0 and 99,999,999
+	return fmt.Sprintf("%d%08d", epochSeconds, randomNumber)
 }
 
 // EvalSessionID evaluates and potentially updates the session ID based on the last touch time.
@@ -67,16 +81,16 @@ func (c *Client) EvalSessionID() string {
 }
 
 // TrackEvent tracks an event with the specified name and properties.
-func (c *Client) TrackEvent(eventName string, props map[string]interface{}) error {
+func (c *Client) TrackEvent(eventName string, props map[string]interface{}) {
 	if c.APIKey == "" {
 		log.Println("Tracking is disabled: API key is empty.")
-		return nil
+		return
 	}
 
 	systemProps, err := systemProps()
 	if err != nil {
 		log.Printf("Error getting system properties: %v", err)
-		return err
+		return
 	}
 
 	body := map[string]interface{}{
@@ -90,10 +104,61 @@ func (c *Client) TrackEvent(eventName string, props map[string]interface{}) erro
 	data, err := json.Marshal(body)
 	if err != nil {
 		log.Printf("Error marshaling event data: %v", err)
+		return
+	}
+
+	req, err := http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(data))
+	if err != nil {
+		log.Printf("Error creating request: %v", err)
+		return
+	}
+
+	req.Header.Set("App-Key", c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		log.Printf("Error sending request: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode >= 300 {
+		log.Printf("TrackEvent failed with status code %d: %s", resp.StatusCode, string(respBody))
+		return
+	}
+
+	log.Println("Event tracked successfully!")
+}
+
+// processQueue processes the in-memory event queue.
+func (c *Client) processQueue() {
+	for {
+		time.Sleep(10 * time.Second) // Wait before processing the queue
+		c.mu.Lock()
+		if len(c.eventQueue) > 0 {
+			for _, event := range c.eventQueue {
+				if err := c.sendEvent(event); err != nil {
+					log.Printf("Failed to send event: %v", err)
+				}
+			}
+			c.eventQueue = []map[string]interface{}{} // Clear the queue after processing
+		}
+		c.mu.Unlock()
+	}
+}
+
+// sendEvent sends an individual event to the Aptabase API.
+func (c *Client) sendEvent(event map[string]interface{}) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		log.Printf("Error marshaling event data: %v", err)
 		return err
 	}
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/events", bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(data))
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
 		return err
@@ -129,7 +194,7 @@ func systemProps() (map[string]interface{}, error) {
 		"isDebug":        false, // Set to true if in debug mode
 		"osName":         osName,
 		"osVersion":      osVersion,
-		"locale":         "en_US.UTF-8",
+		"locale":         "en_US.UTF-8",       // You can update this as needed
 		"appVersion":     "1.0.0",             // Replace with actual app version
 		"appBuildNumber": "100",               // Replace with actual build number
 		"sdkVersion":     "go-aptabase@0.0.0", // Assuming SDK version is available in sysInfo
@@ -138,11 +203,7 @@ func systemProps() (map[string]interface{}, error) {
 	return props, nil
 }
 
-// RandomString generates a random string (replace with a better method if needed).
-func RandomString() string {
-	length := 12
-	rand.Seed(uint64(time.Now().UnixNano()))
-	b := make([]byte, length+2)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)[2 : length+2]
+// Helper function to check if a substring exists in a string
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
 }
