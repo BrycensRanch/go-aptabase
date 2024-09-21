@@ -1,0 +1,23 @@
+//go:build windows
+// +build windows
+
+package osinfo
+
+import (
+	"fmt"
+
+	"golang.org/x/sys/windows"
+)
+
+// getWindowsVersion retrieves the Windows version information.
+func getWindowsVersion() string {
+	var versionInfo windows.OsVersionInfoEx
+
+	// Construct version string (major.minor.build)
+	return formatVersion(versionInfo.MajorVersion, versionInfo.MinorVersion, versionInfo.BuildNumber)
+}
+
+// formatVersion formats the version number into a string.
+func formatVersion(major, minor, build uint32) string {
+	return fmt.Sprintf("%d.%d.%d", major, minor, build)
+}
