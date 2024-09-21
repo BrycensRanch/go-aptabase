@@ -93,13 +93,13 @@ func (c *Client) TrackEvent(eventName string, props map[string]interface{}) {
 		return
 	}
 
-	body := map[string]interface{}{
+	body := []map[string]interface{}{{
 		"timestamp":   time.Now().UTC().Format(time.RFC3339),
 		"sessionId":   c.EvalSessionID(),
 		"eventName":   eventName,
 		"systemProps": systemProps,
 		"props":       props,
-	}
+	}}
 
 	data, err := json.Marshal(body)
 	if err != nil {
@@ -107,7 +107,7 @@ func (c *Client) TrackEvent(eventName string, props map[string]interface{}) {
 		return
 	}
 
-	req, err := http.NewRequest("POST", c.BaseURL + "/api/v0/events", bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", c.BaseURL+"/api/v0/events", bytes.NewBuffer(data))
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
 		return
