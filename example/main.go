@@ -31,27 +31,18 @@ func main() {
 		},
 		Timestamp: time.Now(),
 	}
-	
+
+	// Convert EventParams to map[string]interface{}
+	eventParams := make(map[string]interface{})
+	for k, v := range event.EventParams {
+		eventParams[k] = v
+	}
+
 	// Track the event
-	err := client.TrackEvent(event.EventName, event.EventParams)
+	err := client.TrackEvent(event.EventName, eventParams)
 	if err != nil {
 		fmt.Printf("Error tracking event: %v\n", err)
 	} else {
 		fmt.Println("Event tracked successfully!")
-	}
-
-	// Create a session to track
-	session := Session{
-		SessionID: "session_001",
-		StartTime: time.Now().Add(-30 * time.Minute),
-		EndTime:   time.Now(),
-	}
-
-	// Track the session (assuming you have a TrackSession method)
-	err = client.TrackSession(session.SessionID, session.StartTime, session.EndTime)
-	if err != nil {
-		fmt.Printf("Error tracking session: %v\n", err)
-	} else {
-		fmt.Println("Session tracked successfully!")
 	}
 }
