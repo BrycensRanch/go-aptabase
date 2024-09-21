@@ -13,6 +13,13 @@ To get started, simply add this SDK to your Go project with:
 go get github.com/brycensranch/go-aptabase
 ```
 
+## ❤️‍🔥 Features
+
+- No CGO
+- No external dependencies
+- Windows, Linux, macOS, and FreeBSD Support
+- No random command prompts opening
+
 ## 🚀 Usage
 
 Check out the example usage [here](./example/main.go).
