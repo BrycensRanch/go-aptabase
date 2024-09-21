@@ -12,57 +12,60 @@ import (
 )
 
 type Client struct {
-	apiKey         string
-	baseURL        string
-	httpClient     *http.Client
-	sessionID      string
-	lastTouch      time.Time
-	sessionTimeout time.Duration
+	APIKey         string        // Public field
+	BaseURL        string        // Public field
+	HTTPClient     *http.Client  // Public field
+	SessionID      string        // Public field
+	LastTouch      time.Time     // Public field
+	SessionTimeout time.Duration // Public field
 }
 
+// NewClient creates a new Client with the specified API key and optional base URL.
 func NewClient(apiKey string, baseURL ...string) *Client {
 	client := &Client{
-		apiKey:         apiKey,
-		httpClient:     &http.Client{Timeout: 10 * time.Second},
-		sessionTimeout: 1 * time.Hour, // default session timeout
+		APIKey:         apiKey,
+		HTTPClient:     &http.Client{Timeout: 10 * time.Second},
+		SessionTimeout: 1 * time.Hour, // default session timeout
 	}
 
 	if len(baseURL) > 0 {
-		client.baseURL = baseURL[0]
+		client.BaseURL = baseURL[0]
 	} else {
-		client.baseURL = "https://api.aptabase.com/v1"
+		client.BaseURL = "https://api.aptabase.com/v1"
 	}
 
-	client.sessionID = client.newSessionID()
-	client.lastTouch = time.Now().UTC()
+	client.SessionID = client.NewSessionID()
+	client.LastTouch = time.Now().UTC()
 
 	return client
 }
 
-func (c *Client) newSessionID() string {
-	// Generate a new session ID (you can use a better method here)
+// NewSessionID generates a new session ID (you can use a better method here).
+func (c *Client) NewSessionID() string {
 	return RandomString()
 }
 
-func (c *Client) evalSessionID() string {
+// EvalSessionID evaluates and potentially updates the session ID based on the last touch time.
+func (c *Client) EvalSessionID() string {
 	now := time.Now().UTC()
-	if now.Sub(c.lastTouch) > c.sessionTimeout {
-		c.sessionID = c.newSessionID()
-		log.Printf("New session ID generated: %s", c.sessionID)
+	if now.Sub(c.LastTouch) > c.SessionTimeout {
+		c.SessionID = c.NewSessionID()
+		log.Printf("New session ID generated: %s", c.SessionID)
 	}
-	c.lastTouch = now
-	return c.sessionID
+	c.LastTouch = now
+	return c.SessionID
 }
 
-func (c *Client) trackEvent(eventName string, props map[string]interface{}) error {
-	if c.apiKey == "" {
+// TrackEvent tracks an event with the specified name and properties.
+func (c *Client) TrackEvent(eventName string, props map[string]interface{}) error {
+	if c.APIKey == "" {
 		log.Println("Tracking is disabled: API key is empty.")
 		return nil
 	}
 
 	body := map[string]interface{}{
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
-		"sessionId": c.evalSessionID(),
+		"sessionId": c.EvalSessionID(),
 		"eventName": eventName,
 		"props":     props,
 	}
@@ -73,16 +76,16 @@ func (c *Client) trackEvent(eventName string, props map[string]interface{}) erro
 		return err
 	}
 
-	req, err := http.NewRequest("POST", c.baseURL+"/events", bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", c.BaseURL+"/events", bytes.NewBuffer(data))
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
 		return err
 	}
 
-	req.Header.Set("App-Key", c.apiKey)
+	req.Header.Set("App-Key", c.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		log.Printf("Error sending request: %v", err)
 		return err
@@ -98,7 +101,7 @@ func (c *Client) trackEvent(eventName string, props map[string]interface{}) erro
 	return nil
 }
 
-// RandomString generates a random string (replace with a better method if needed)
+// RandomString generates a random string (replace with a better method if needed).
 func RandomString() string {
 	length := 12
 	rand.Seed(uint64(time.Now().UnixNano()))

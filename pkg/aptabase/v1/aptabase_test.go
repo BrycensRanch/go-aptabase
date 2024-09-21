@@ -11,31 +11,31 @@ import (
 func TestNewClient(t *testing.T) {
 	client := NewClient("test-api-key")
 
-	if client.apiKey != "test-api-key" {
-		t.Errorf("Expected apiKey to be 'test-api-key', got '%s'", client.apiKey)
+	if client.APIKey != "test-api-key" {
+		t.Errorf("Expected APIKey to be 'test-api-key', got '%s'", client.APIKey)
 	}
 
-	if client.baseURL != "https://api.aptabase.com/v1" {
-		t.Errorf("Expected default baseURL, got '%s'", client.baseURL)
+	if client.BaseURL != "https://api.aptabase.com/v1" {
+		t.Errorf("Expected default BaseURL, got '%s'", client.BaseURL)
 	}
 }
 
 func TestNewClientWithCustomBaseURL(t *testing.T) {
 	client := NewClient("test-api-key", "https://custom.api.aptabase.com/v1")
 
-	if client.baseURL != "https://custom.api.aptabase.com/v1" {
-		t.Errorf("Expected baseURL to be 'https://custom.api.aptabase.com/v1', got '%s'", client.baseURL)
+	if client.BaseURL != "https://custom.api.aptabase.com/v1" {
+		t.Errorf("Expected BaseURL to be 'https://custom.api.aptabase.com/v1', got '%s'", client.BaseURL)
 	}
 }
 
 func TestEvalSessionID(t *testing.T) {
 	client := NewClient("test-api-key")
-	oldSessionID := client.sessionID
+	oldSessionID := client.SessionID
 
 	// Simulate a timeout
-	time.Sleep(1 * time.Hour)
+	time.Sleep(1 * time.Second) // Shortened for test purposes
 
-	newSessionID := client.evalSessionID()
+	newSessionID := client.EvalSessionID()
 	if oldSessionID == newSessionID {
 		t.Error("Expected a new session ID to be generated after timeout")
 	}
@@ -67,9 +67,9 @@ func TestTrackEventSuccess(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	client.baseURL = ts.URL
+	client.BaseURL = ts.URL
 
-	err := client.trackEvent("test_event", map[string]interface{}{"prop1": "value1"})
+	err := client.TrackEvent("test_event", map[string]interface{}{"prop1": "value1"})
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -78,7 +78,7 @@ func TestTrackEventSuccess(t *testing.T) {
 func TestTrackEventDisabled(t *testing.T) {
 	client := NewClient("") // No API key
 
-	err := client.trackEvent("test_event", nil)
+	err := client.TrackEvent("test_event", nil)
 	if err != nil {
 		t.Error("Expected no error when tracking is disabled")
 	}
@@ -93,9 +93,9 @@ func TestTrackEventHTTPError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	client.baseURL = ts.URL
+	client.BaseURL = ts.URL
 
-	err := client.trackEvent("test_event", nil)
+	err := client.TrackEvent("test_event", nil)
 	if err == nil {
 		t.Error("Expected an error due to HTTP error response")
 	}

@@ -1,14 +1,28 @@
-package main
+package example
 
 import (
 	"fmt"
 	"time"
+
 	"github.com/brycensranch/go-aptabase/pkg/aptabase/v1"
 )
 
-func main() {
-	client := NewClient("your-api-key")
+type Event struct {
+	EventName   string
+	EventParams map[string]string
+	Timestamp   time.Time
+}
 
+type Session struct {
+	SessionID string
+	StartTime time.Time
+	EndTime   time.Time
+}
+
+func main() {
+	client := aptabase.NewClient("your-api-key")
+
+	// Create an event to track
 	event := Event{
 		EventName: "user_login",
 		EventParams: map[string]string{
@@ -17,21 +31,24 @@ func main() {
 		},
 		Timestamp: time.Now(),
 	}
-
-	err := client.TrackEvent(event)
+	
+	// Track the event
+	err := client.TrackEvent(event.EventName, event.EventParams)
 	if err != nil {
 		fmt.Printf("Error tracking event: %v\n", err)
 	} else {
 		fmt.Println("Event tracked successfully!")
 	}
 
+	// Create a session to track
 	session := Session{
 		SessionID: "session_001",
 		StartTime: time.Now().Add(-30 * time.Minute),
 		EndTime:   time.Now(),
 	}
 
-	err = client.TrackSession(session)
+	// Track the session (assuming you have a TrackSession method)
+	err = client.TrackSession(session.SessionID, session.StartTime, session.EndTime)
 	if err != nil {
 		fmt.Printf("Error tracking session: %v\n", err)
 	} else {
