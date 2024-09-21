@@ -194,7 +194,7 @@ func systemProps() (map[string]interface{}, error) {
 		"isDebug":        false, // Set to true if in debug mode
 		"osName":         osName,
 		"osVersion":      osVersion,
-		"locale":         "en_US.UTF-8",       // You can update this as needed
+		"locale":         "en_US",       // You can update this as needed
 		"appVersion":     "1.0.0",             // Replace with actual app version
 		"appBuildNumber": "100",               // Replace with actual build number
 		"sdkVersion":     "go-aptabase@0.0.0", // Assuming SDK version is available in sysInfo
