@@ -13,12 +13,6 @@ type Event struct {
 	Timestamp   time.Time
 }
 
-type Session struct {
-	SessionID string
-	StartTime time.Time
-	EndTime   time.Time
-}
-
 func main() {
 	client := aptabase.NewClient("your-api-key")
 
