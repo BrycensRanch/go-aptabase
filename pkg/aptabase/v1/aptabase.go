@@ -8,8 +8,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/brycensranch/go-aptabase/pkg/osinfo/v1" // Import your osinfo package
 	"golang.org/x/exp/rand"
 )
+
+
+var hosts = map[string]string{
+	"EU":  "https://eu.aptabase.com",
+	"US":  "https://us.aptabase.com",
+	"DEV": "http://localhost:3000",
+	"SH":  "",
+}
 
 type Client struct {
 	APIKey         string        // Public field
@@ -28,10 +37,11 @@ func NewClient(apiKey string, baseURL ...string) *Client {
 		SessionTimeout: 1 * time.Hour, // default session timeout
 	}
 
-	if len(baseURL) > 0 {
-		client.BaseURL = baseURL[0]
+	// Set the BaseURL based on the specified region
+	if url, exists := hosts["US"]; exists {
+		client.BaseURL = url
 	} else {
-		client.BaseURL = "https://api.aptabase.com/v1"
+		client.BaseURL = hosts["US"] // Default to US if region not found
 	}
 
 	client.SessionID = client.NewSessionID()
@@ -63,11 +73,18 @@ func (c *Client) TrackEvent(eventName string, props map[string]interface{}) erro
 		return nil
 	}
 
+	systemProps, err := systemProps()
+	if err != nil {
+		log.Printf("Error getting system properties: %v", err)
+		return err
+	}
+
 	body := map[string]interface{}{
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-		"sessionId": c.EvalSessionID(),
-		"eventName": eventName,
-		"props":     props,
+		"timestamp":   time.Now().UTC().Format(time.RFC3339),
+		"sessionId":   c.EvalSessionID(),
+		"eventName":   eventName,
+		"systemProps": systemProps,
+		"props":       props,
 	}
 
 	data, err := json.Marshal(body)
@@ -99,6 +116,23 @@ func (c *Client) TrackEvent(eventName string, props map[string]interface{}) erro
 
 	log.Println("Event tracked successfully!")
 	return nil
+}
+
+// systemProps retrieves system information using the osinfo package.
+func systemProps() (map[string]interface{}, error) {
+	osName, osVersion := osinfo.GetOSInfo()
+
+	props := map[string]interface{}{
+		"isDebug":        false, // Set to true if in debug mode
+		"osName":         osName,
+		"osVersion":      osVersion,
+		"locale":         "en_US.UTF-8",
+		"appVersion":     "1.0.0",             // Replace with actual app version
+		"appBuildNumber": "100",               // Replace with actual build number
+		"sdkVersion":     "go-aptabase@0.0.0", // Assuming SDK version is available in sysInfo
+	}
+
+	return props, nil
 }
 
 // RandomString generates a random string (replace with a better method if needed).

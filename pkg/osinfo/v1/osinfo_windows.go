@@ -9,6 +9,12 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+
+func GetOSInfo() (string, string) {
+	return "Windows", getWindowsVersion()
+}
+
+
 // getWindowsVersion retrieves the Windows version information.
 func getWindowsVersion() string {
 	var versionInfo windows.OsVersionInfoEx

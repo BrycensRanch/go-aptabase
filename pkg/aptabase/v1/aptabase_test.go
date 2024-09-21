@@ -15,7 +15,7 @@ func TestNewClient(t *testing.T) {
 		t.Errorf("Expected APIKey to be 'test-api-key', got '%s'", client.APIKey)
 	}
 
-	if client.BaseURL != "https://api.aptabase.com/v1" {
+	if client.BaseURL != "https://us.aptabase.com" {
 		t.Errorf("Expected default BaseURL, got '%s'", client.BaseURL)
 	}
 }

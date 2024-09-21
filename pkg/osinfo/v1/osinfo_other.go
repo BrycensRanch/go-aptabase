@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-// getOSInfo retrieves the OS name and version based on the operating system.
-func getOSInfo() (string, string) {
+// GetOSInfo retrieves the OS name and version based on the operating system.
+func GetOSInfo() (string, string) {
 	switch runtime.GOOS {
 	case "linux":
 		return getLinuxInfo()
