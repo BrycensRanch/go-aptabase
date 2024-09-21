@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/brycensranch/go-aptabase/pkg/osinfo/v1" // Import your osinfo package
 	"golang.org/x/exp/rand"
 )
-
 
 var hosts = map[string]string{
 	"EU":  "https://eu.aptabase.com",
@@ -109,9 +109,12 @@ func (c *Client) TrackEvent(eventName string, props map[string]interface{}) erro
 	}
 	defer resp.Body.Close()
 
+	// Read response body for additional context
+	respBody, _ := io.ReadAll(resp.Body)
+
 	if resp.StatusCode >= 300 {
-		log.Printf("TrackEvent failed with status code %d", resp.StatusCode)
-		return fmt.Errorf("failed with status code %d", resp.StatusCode)
+		log.Printf("TrackEvent failed with status code %d: %s", resp.StatusCode, string(respBody))
+		return fmt.Errorf("failed with status code %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	log.Println("Event tracked successfully!")
