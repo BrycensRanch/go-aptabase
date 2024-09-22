@@ -53,7 +53,7 @@ func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool,
 		APIKey:           apiKey,
 		HTTPClient:       &http.Client{Timeout: 10 * time.Second},
 		SessionTimeout:   1 * time.Hour,
-		eventChan:        make(chan EventData, 10), // Buffered channel for events
+		eventChan:        make(chan EventData, 1), // Buffered channel for events
 		AppVersion:       appVersion,
 		AppBuildNumber:   appBuildNumber,
 		DebugMode:        debugMode,
