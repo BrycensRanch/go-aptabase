@@ -169,10 +169,11 @@ func (c *Client) Stop() {
 	c.wg.Wait()
 	log.Printf("I am DONE WAITING!")
 	c.Quit = true
-	close(c.quitChan)
 	c.wg.Wait()
 	// for good measure!
 	c.processQueue()
+	c.wg.Wait()
+	close(c.quitChan)
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
