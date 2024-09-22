@@ -114,14 +114,16 @@ func (c *Client) processQueue() {
 			log.Printf("processQueue received event: %+v", event)
 			batch = append(batch, event)
 			log.Printf("processQueue has current batch: %v", batch)
-			// Batch is full, send it
-			go func() {
-				err := c.sendEvents(batch)
-				if err != nil {
-					log.Printf("Error sending events: %v", err)
-				}
-			}()
-			batch = make([]EventData, 0, len(batch)) // Reset the batch for next events
+			if len(batch) > 10 {
+				// Batch is full, send it
+				go func() {
+					err := c.sendEvents(batch)
+					if err != nil {
+						log.Printf("Error sending events: %v", err)
+					}
+				}()
+				batch = make([]EventData, 0, len(batch)) // Reset the batch for next events
+			}
 		case <-c.quitChan:
 			log.Printf("processQueue received quitChan")
 			// Drain any remaining events before exiting
