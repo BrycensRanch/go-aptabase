@@ -114,7 +114,6 @@ func (c *Client) processQueue() {
 		case event := <-c.eventChan:
 			log.Printf("processQueue received event: %+v", event)
 			batch = append(batch, event)
-			if len(batch) == cap(batch) {
 				// Batch is full, send it
 				go func() {
 					err := c.sendEvents(batch)
@@ -122,8 +121,7 @@ func (c *Client) processQueue() {
 						log.Printf("Error sending events: %v", err)
 					}
 				}()
-				batch = make([]EventData, 0, 10) // Reset the batch for next events
-			}
+				batch = make([]EventData, 0, len(batch)) // Reset the batch for next events
 		case <-c.quitChan:
 			log.Printf("processQueue received quitChan")
 			// Drain any remaining events before exiting
@@ -137,8 +135,6 @@ func (c *Client) processQueue() {
 			}
 			return
 		default:
-			// Add some logic here, e.g., log a message or exit after a timeout
-			log.Println("processQueue: no events or quit signal received yet...")
 		}
 	}
 }
