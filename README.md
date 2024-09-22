@@ -18,7 +18,7 @@ go get github.com/brycensranch/go-aptabase
 - No CGO
 - No external dependencies
 - Windows, Linux, macOS, and FreeBSD Support
-- No random command prompts opening
+- No random command prompts opening! On Windows, it uses the Windows API as it should!
 
 ## 🚀 Usage
 

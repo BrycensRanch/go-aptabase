@@ -22,7 +22,6 @@ var hosts = map[string]string{
 	"US":  "https://us.aptabase.com",
 	"SH":  "",
 	"DEV": "http://localhost:3000",
-	
 }
 
 // EventData represents the structure of the event data passed to TrackEvent.
@@ -59,7 +58,7 @@ func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool,
 	}
 
 	client.BaseURL = client.determineHost(apiKey)
-	if (strings.Contains(client.APIKey, "SH")) {
+	if strings.Contains(client.APIKey, "SH") {
 		client.BaseURL = baseURL
 	}
 	client.SessionID = client.NewSessionID()
@@ -156,7 +155,7 @@ func (c *Client) sendEvents(events []EventData) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", c.BaseURL+"/api/v0/events", bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -190,13 +189,13 @@ func (c *Client) systemProps() (map[string]interface{}, error) {
 		"isDebug":        c.DebugMode,
 		"osName":         osName,
 		"osVersion":      osVersion,
-		"engineName":	  "go",
-		"engineVersion":   runtime.Version(),
+		"engineName":     "go",
+		"engineVersion":  runtime.Version(),
 		"locale":         locale.GetLocale(),
 		"appVersion":     c.AppVersion,
 		"appBuildNumber": c.AppBuildNumber,
 		// TODO: Embed VERSION file into code...
-		"sdkVersion":     "go-aptabase@0.0.0",
+		"sdkVersion": "go-aptabase@0.0.0",
 	}
 
 	return props, nil
