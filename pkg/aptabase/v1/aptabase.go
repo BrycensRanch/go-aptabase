@@ -121,6 +121,7 @@ func (c *Client) sendQueuedEvents() {
 	defer c.mu.Unlock()
 
 	if len(c.eventQueue) == 0 {
+		println("Event queue is 0 yet sendQueuedEvents was called! Bug?")
 		return
 	}
 
@@ -198,7 +199,7 @@ func (c *Client) TrackEvent(event EventData) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	log.Printf("Queuing event: %s", event.EventName)
+	log.Printf("Queuing event: %s\nEvent data: %v", event.EventName, event.Props)
 	c.eventQueue = append(c.eventQueue, event)
 
 	if len(c.eventQueue) > 1000 { // Example limit, adjust as needed
