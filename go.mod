@@ -2,7 +2,7 @@ module github.com/brycensranch/go-aptabase
 
 go 1.23.1
 
-require github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922153051-9c2abe14eb4f
+require github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922153214-11fa0d0c82e8
 
 require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect

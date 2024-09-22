@@ -156,7 +156,7 @@ func (c *Client) sendEvents(events []EventData) error {
 	var batch []map[string]interface{}
 	for _, event := range events {
 		if c.DebugMode {
-			log.Printf("Event: %s\nData: %v\nSystemProps: %v", event.EventName, event.Props, systemProps)
+			log.Printf("Event: %s\nData: %v\nSystemProps: %v\n", event.EventName, event.Props, systemProps)
 		}
 
 		// Add event to the batch
@@ -177,7 +177,8 @@ func (c *Client) sendEvents(events []EventData) error {
 	}
 	if string(data) == "null" {
 		log.Printf("Event data is null!! Bug?\n")
-		log.Printf("Batch %v", batch)
+		log.Printf("Batch %v\n", batch)
+		log.Printf("Events %v\n", events)
 		return nil
 	}
 	// Log the request data cleanly
