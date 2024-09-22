@@ -167,8 +167,8 @@ func (c *Client) processQueue() {
 func (c *Client) Stop() {
 	log.Println("Stop called")
 	c.wg.Wait()
-	close(c.quitChan)
 	c.Quit = true
+	close(c.quitChan)
 	c.processQueue()
 }
 
