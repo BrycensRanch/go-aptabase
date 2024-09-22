@@ -158,8 +158,8 @@ func (c *Client) processQueue() {
 // Stop gracefully stops the event processing and sends any remaining events.
 func (c *Client) Stop() {
 	log.Println("Stop called")
-	//close(c.quitChan)
 	c.wg.Wait()
+	close(c.quitChan)
 	c.Quit = true
 	c.processQueue()
 }
