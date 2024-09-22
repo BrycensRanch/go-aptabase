@@ -68,6 +68,8 @@ func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool,
 
 	go client.processQueue()
 
+	log.Printf("NewClient created with APIKey=%s, BaseURL=%s, SessionID=%s", client.APIKey, client.BaseURL, client.SessionID)
+
 	return client
 }
 
@@ -83,6 +85,7 @@ func (c *Client) determineHost(apiKey string) string {
 
 // NewSessionID generates a new session ID in the format of epochInSeconds + 8 random numbers.
 func (c *Client) NewSessionID() string {
+	log.Printf("NewSessionID called")
 	epochSeconds := time.Now().UTC().Unix()
 	randomNumber := rand.Intn(100000000)
 	return fmt.Sprintf("%d%08d", epochSeconds, randomNumber)
@@ -90,6 +93,7 @@ func (c *Client) NewSessionID() string {
 
 // EvalSessionID evaluates and updates the session ID if the session has expired.
 func (c *Client) EvalSessionID() string {
+	log.Printf("EvalSessionID called")
 	now := time.Now().UTC()
 	if now.Sub(c.LastTouch) > c.SessionTimeout {
 		c.SessionID = c.NewSessionID()
@@ -101,6 +105,7 @@ func (c *Client) EvalSessionID() string {
 // processQueue processes the queued events periodically, batching them into a single request.
 
 func (c *Client) processQueue() {
+	log.Printf("processQueue started")
 	batch := make([]EventData, 0, 10) // Pre-allocate a slice to hold up to 10 events
 
 	for {
@@ -134,6 +139,7 @@ func (c *Client) processQueue() {
 
 // Stop gracefully stops the event processing and sends any remaining events.
 func (c *Client) Stop() {
+	log.Printf("Stop called")
 	close(c.quitChan)
 }
 
@@ -172,6 +178,8 @@ func (c *Client) sendEvents(events []EventData) error {
 	req.Header.Set("App-Key", c.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
+	log.Printf("Sending events to %s", c.BaseURL)
+
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return err
@@ -191,6 +199,7 @@ func (c *Client) sendEvents(events []EventData) error {
 
 // TrackEvent queues an event with the specified EventData for tracking.
 func (c *Client) TrackEvent(event EventData) {
+	log.Printf("TrackEvent called with event: %+v", event)
 	c.eventChan <- event
 }
 
@@ -211,6 +220,7 @@ func (c *Client) systemProps() (map[string]interface{}, error) {
 		// TODO: Embed VERSION file into code...
 		"sdkVersion": "go-aptabase@0.0.0",
 	}
+	fmt.Printf("systemProps: %v", props)
 
 	return props, nil
 }
