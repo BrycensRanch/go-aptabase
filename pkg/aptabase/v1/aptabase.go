@@ -193,9 +193,8 @@ func (c *Client) sendEvents(events []EventData) error {
 
 	respBody, _ := io.ReadAll(resp.Body)
 	respJSON, _ := json.Marshal(respBody)
-	responseURL, _ := resp.Location()
 	if resp.StatusCode >= 300 {
-		log.Printf("TrackEvent failed with status code %d at %s: %v", resp.StatusCode, responseURL, respJSON)
+		log.Printf("TrackEvent failed with status code %d at %s: %v", resp.StatusCode, resp.Request.URL, respJSON)
 		return nil
 	}
 
