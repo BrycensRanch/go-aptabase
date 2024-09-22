@@ -147,7 +147,7 @@ func (c *Client) Stop() {
 func (c *Client) sendEvents(events []EventData) error {
 	systemProps, err := c.systemProps()
 	if err != nil {
-		log.Println("Error getting system properties: %v", err)
+		log.Printf("Error getting system properties: %v\n", err)
 		return err
 	}
 
@@ -187,9 +187,10 @@ func (c *Client) sendEvents(events []EventData) error {
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-
+	respJSON, _ := json.Marshal(respBody)
+	responseURL, _ := resp.Location()
 	if resp.StatusCode >= 300 {
-		log.Printf("TrackEvent failed with status code %d: %v", resp.StatusCode, respBody)
+		log.Printf("TrackEvent failed with status code %d at %s: %v", resp.StatusCode, responseURL, respJSON)
 		return nil
 	}
 
