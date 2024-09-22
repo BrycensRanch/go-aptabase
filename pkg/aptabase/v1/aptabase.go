@@ -107,12 +107,13 @@ func (c *Client) EvalSessionID() string {
 // processQueue processes the queued events periodically, batching them into a single request.
 
 func (c *Client) processQueue() {
-	log.Println("processQueue started")
+	log.Printf("processQueue started")
 	batch := make([]EventData, 0, 10) // Pre-allocate a slice to hold up to 10 events
 
 	for {
 		select {
 		case event := <-c.eventChan:
+			log.Printf("processQueue received event: %+v", event)
 			batch = append(batch, event)
 			if len(batch) == cap(batch) {
 				// Batch is full, send it
@@ -125,7 +126,8 @@ func (c *Client) processQueue() {
 				batch = make([]EventData, 0, 10) // Reset the batch for next events
 			}
 		case <-c.quitChan:
-			// Drain the remaining events before quitting
+			log.Printf("processQueue received quitChan")
+			// Drain any remaining events before exiting
 			if len(batch) > 0 {
 				go func() {
 					err := c.sendEvents(batch)
