@@ -134,7 +134,7 @@ func (c *Client) processQueue() {
 			log.Printf("processQueue received quitChan")
 
 			// Send any remaining events before exiting
-			if len(batch) > 0 {
+			if len(batch) > 0 || c.Quit {
 				c.wg.Add(1)
 				go func(batchToSend []EventData) {
 					defer c.wg.Done()
