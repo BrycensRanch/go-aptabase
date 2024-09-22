@@ -1,7 +1,5 @@
-github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922034824-c528fb298ee4 h1:Iezo8xL9C+y3d7fCbVvAwJenTdU3svfzmwFM8/CIHh4=
-github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922034824-c528fb298ee4/go.mod h1:7XDIfmemqgJG4q6l/AyIVCmVB+0oxRCI3TAB1VcN0B8=
-github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922041020-cd9643500a03 h1:OH7SRcroj4EbbzJITCvgJYkUErAqRgUnoAs1R3iCXdc=
-github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922041020-cd9643500a03/go.mod h1:7XDIfmemqgJG4q6l/AyIVCmVB+0oxRCI3TAB1VcN0B8=
+github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922234652-98670f6ce2e0 h1:hKuIiINOKX2uMEThveYQNJuvbqVsIZsmJQOd0Q4BX4M=
+github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922234652-98670f6ce2e0/go.mod h1:U2f/RVFy02IfdelhOPYJ4PTlhsgq4XUPAWS81fMNq4w=
 golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 h1:e66Fs6Z+fZTbFBAxKfP3PALWBtpfqks2bwGcexMxgtk=
 golang.org/x/exp v0.0.0-20240909161429-701f63a606c0/go.mod h1:2TbTHSBQa924w8M6Xs1QcRcFwyucIwBGpK1p2f1YFFY=
 golang.org/x/sys v0.25.0 h1:r+8e+loiHxRqhXVl6ML1nO3l1+oFoWbnlu2Ehimmi34=
