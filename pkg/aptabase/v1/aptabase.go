@@ -68,6 +68,8 @@ func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool,
 	client.SessionID = client.NewSessionID()
 	client.LastTouch = time.Now().UTC()
 
+	go client.processQueue()
+
 	client.processQueueOnce.Do(client.processQueue)
 
 	log.Printf("NewClient created with APIKey=%s, BaseURL=%s, SessionID=%s", client.APIKey, client.BaseURL, client.SessionID)
@@ -114,14 +116,14 @@ func (c *Client) processQueue() {
 		case event := <-c.eventChan:
 			log.Printf("processQueue received event: %+v", event)
 			batch = append(batch, event)
-				// Batch is full, send it
-				go func() {
-					err := c.sendEvents(batch)
-					if err != nil {
-						log.Printf("Error sending events: %v", err)
-					}
-				}()
-				batch = make([]EventData, 0, len(batch)) // Reset the batch for next events
+			// Batch is full, send it
+			go func() {
+				err := c.sendEvents(batch)
+				if err != nil {
+					log.Printf("Error sending events: %v", err)
+				}
+			}()
+			batch = make([]EventData, 0, len(batch)) // Reset the batch for next events
 		case <-c.quitChan:
 			log.Printf("processQueue received quitChan")
 			// Drain any remaining events before exiting
