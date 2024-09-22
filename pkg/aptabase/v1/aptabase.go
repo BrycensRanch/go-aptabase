@@ -267,7 +267,6 @@ func (c *Client) sendEvents(events []EventData) error {
 func (c *Client) TrackEvent(event EventData) {
 	log.Printf("TrackEvent called with event: %+v", event)
 	c.eventChan <- event
-	defer c.wg.Wait()
 }
 
 // systemProps retrieves system information using the osinfo package,
