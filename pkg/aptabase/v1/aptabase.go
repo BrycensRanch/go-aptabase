@@ -175,7 +175,7 @@ func (c *Client) Stop() {
 	log.Printf("UNTIL ALL ARE ONE!!!")
 	c.wg.Wait()
 	log.Printf("I have finished waiting for all goroutines, the end of days is here.")
-	close(c.quitChan)
+	defer close(c.quitChan)
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
