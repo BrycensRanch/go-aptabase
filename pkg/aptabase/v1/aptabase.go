@@ -169,7 +169,7 @@ func (c *Client) sendEvents(events []EventData) error {
 	if err != nil {
 		return err
 	}
-
+	fmt.Printf("Sending data: %v", data)
 	req, err := http.NewRequest("POST", c.BaseURL+"/api/v0/events", bytes.NewBuffer(data))
 	if err != nil {
 		return err
