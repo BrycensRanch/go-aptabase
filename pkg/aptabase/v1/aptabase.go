@@ -138,6 +138,8 @@ func (c *Client) processQueue() {
 					}
 				}()
 			}
+			c.wg.Wait()
+			log.Printf("processQueue stopped")
 			return
 		default:
 		}
