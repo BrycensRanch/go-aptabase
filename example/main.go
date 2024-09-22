@@ -2,7 +2,6 @@ package example
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/brycensranch/go-aptabase/pkg/aptabase/v1"
 )
@@ -10,7 +9,6 @@ import (
 type Event struct {
 	EventName   string
 	EventParams map[string]string
-	Timestamp   time.Time
 }
 
 func main() {
@@ -23,7 +21,6 @@ func main() {
 			"user_id": "12345",
 			"device":  "mobile",
 		},
-		Timestamp: time.Now(),
 	}
 
 	// Convert EventParams to map[string]interface{}

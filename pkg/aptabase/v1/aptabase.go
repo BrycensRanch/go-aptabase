@@ -7,160 +7,157 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/brycensranch/go-aptabase/pkg/osinfo/v1" // Import your osinfo package
+	"github.com/brycensranch/go-aptabase/pkg/locale"
+	"github.com/brycensranch/go-aptabase/pkg/osinfo/v1"
 	"golang.org/x/exp/rand"
 )
 
 var hosts = map[string]string{
 	"EU":  "https://eu.aptabase.com",
 	"US":  "https://us.aptabase.com",
-	"DEV": "http://localhost:3000",
 	"SH":  "",
+	"DEV": "http://localhost:3000",
+	
 }
 
+// EventData represents the structure of the event data passed to TrackEvent.
+type EventData struct {
+	EventName string                 `json:"eventName"`
+	Props     map[string]interface{} `json:"props"`
+}
+
+// Client represents a tracking client.
 type Client struct {
-	APIKey         string        // Public field
-	BaseURL        string        // Public field
-	HTTPClient     *http.Client  // Public field
-	SessionID      string        // Public field
-	LastTouch      time.Time     // Public field
-	SessionTimeout time.Duration // Public field
-	eventQueue     []map[string]interface{}
+	APIKey         string
+	BaseURL        string
+	HTTPClient     *http.Client
+	SessionID      string
+	LastTouch      time.Time
+	SessionTimeout time.Duration
+	eventQueue     []EventData
 	mu             sync.Mutex
+	AppVersion     string
+	AppBuildNumber uint64
+	DebugMode      bool
 }
 
-// NewClient creates a new Client with the specified API key and optional base URL.
-func NewClient(apiKey string, baseURL ...string) *Client {
+// NewClient creates a new Client with the specified parameters.
+func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool, baseURL string) *Client {
 	client := &Client{
 		APIKey:         apiKey,
 		HTTPClient:     &http.Client{Timeout: 10 * time.Second},
-		SessionTimeout: 1 * time.Hour, // default session timeout
-		eventQueue:     []map[string]interface{}{},
+		SessionTimeout: 1 * time.Hour,
+		eventQueue:     []EventData{},
+		AppVersion:     appVersion,
+		AppBuildNumber: appBuildNumber,
+		DebugMode:      debugMode,
 	}
 
-	// Determine the host from the App-Key
-	if apiKeyContains := func() string {
-		if contains(apiKey, "EU") {
-			return "EU"
-		}
-		return "US" // Default to US if "EU" is not found
-	}(); apiKeyContains != "" {
-		client.BaseURL = hosts[apiKeyContains]
-	} else {
-		client.BaseURL = hosts["US"] // Fallback if no valid region found
+	client.BaseURL = client.determineHost(apiKey)
+	if (strings.Contains(client.APIKey, "SH")) {
+		client.BaseURL = baseURL
 	}
-
 	client.SessionID = client.NewSessionID()
 	client.LastTouch = time.Now().UTC()
 
-	go client.processQueue() // Start the queue processing in a goroutine
+	go client.processQueue()
 
 	return client
+}
+
+// determineHost selects the host URL based on the AppKey.
+func (c *Client) determineHost(apiKey string) string {
+	if strings.Contains(apiKey, "EU") {
+		return hosts["EU"]
+	} else if strings.Contains(apiKey, "DEV") {
+		return hosts["DEV"]
+	}
+	return hosts["US"]
 }
 
 // NewSessionID generates a new session ID in the format of epochInSeconds + 8 random numbers.
 func (c *Client) NewSessionID() string {
 	epochSeconds := time.Now().UTC().Unix()
-	randomNumber := rand.Intn(100000000) // Generates a random number between 0 and 99,999,999
+	randomNumber := rand.Intn(100000000)
 	return fmt.Sprintf("%d%08d", epochSeconds, randomNumber)
 }
 
-// EvalSessionID evaluates and potentially updates the session ID based on the last touch time.
+// EvalSessionID evaluates and updates the session ID if the session has expired.
 func (c *Client) EvalSessionID() string {
 	now := time.Now().UTC()
 	if now.Sub(c.LastTouch) > c.SessionTimeout {
 		c.SessionID = c.NewSessionID()
-		log.Printf("New session ID generated: %s", c.SessionID)
 	}
 	c.LastTouch = now
 	return c.SessionID
 }
 
-// TrackEvent tracks an event with the specified name and properties.
-func (c *Client) TrackEvent(eventName string, props map[string]interface{}) {
-	if c.APIKey == "" {
-		log.Println("Tracking is disabled: API key is empty.")
-		return
-	}
+// TrackEvent queues an event with the specified EventData.
+func (c *Client) TrackEvent(event EventData) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	systemProps, err := systemProps()
+	c.eventQueue = append(c.eventQueue, event)
+}
+
+// processQueue processes the queued events periodically, batching them into a single request.
+func (c *Client) processQueue() {
+	ticker := time.NewTicker(10 * time.Second)
+	for range ticker.C {
+		c.mu.Lock()
+
+		if len(c.eventQueue) == 0 {
+			c.mu.Unlock()
+			continue
+		}
+
+		// Copy and clear the event queue to avoid holding the lock too long.
+		batch := make([]EventData, len(c.eventQueue))
+		copy(batch, c.eventQueue)
+		c.eventQueue = []EventData{}
+
+		c.mu.Unlock()
+
+		// Send the batch of events in a single request.
+		err := c.sendEvents(batch)
+		if err != nil {
+			log.Printf("Failed to send events: %v", err)
+		}
+	}
+}
+
+// sendEvents sends a batch of events to the tracking service in a single request.
+func (c *Client) sendEvents(events []EventData) error {
+	systemProps, err := c.systemProps()
 	if err != nil {
 		log.Printf("Error getting system properties: %v", err)
-		return
+		return err
 	}
 
-	body := []map[string]interface{}{{
-		"timestamp":   time.Now().UTC().Format(time.RFC3339),
-		"sessionId":   c.EvalSessionID(),
-		"eventName":   eventName,
-		"systemProps": systemProps,
-		"props":       props,
-	}}
+	// Enhance each event with system properties, timestamp, and session ID
+	var batch []map[string]interface{}
+	for _, event := range events {
+		batch = append(batch, map[string]interface{}{
+			"timestamp":   time.Now().UTC().Format(time.RFC3339),
+			"sessionId":   c.EvalSessionID(),
+			"systemProps": systemProps,
+			"eventName":   event.EventName,
+			"props":       event.Props,
+		})
+	}
 
-	data, err := json.Marshal(body)
+	data, err := json.Marshal(batch) // Directly marshal the array of events
 	if err != nil {
-		log.Printf("Error marshaling event data: %v", err)
-		return
-	}
-
-	req, err := http.NewRequest("POST", c.BaseURL+"/api/v0/events", bytes.NewBuffer(data))
-	if err != nil {
-		log.Printf("Error creating request: %v", err)
-		return
-	}
-
-	req.Header.Set("App-Key", c.APIKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.HTTPClient.Do(req)
-	if err != nil {
-		log.Printf("Error sending request: %v", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	respBody, _ := io.ReadAll(resp.Body)
-
-	if resp.StatusCode >= 300 {
-		log.Printf("TrackEvent failed with status code %d: %s", resp.StatusCode, string(respBody))
-		return
-	}
-
-	log.Println("Event tracked successfully!")
-}
-
-// processQueue processes the in-memory event queue.
-func (c *Client) processQueue() {
-	for {
-		time.Sleep(10 * time.Second) // Wait before processing the queue
-		c.mu.Lock()
-		if len(c.eventQueue) > 0 {
-			for _, event := range c.eventQueue {
-				if err := c.sendEvent(event); err != nil {
-					log.Printf("Failed to send event: %v", err)
-				}
-			}
-			c.eventQueue = []map[string]interface{}{} // Clear the queue after processing
-		}
-		c.mu.Unlock()
-	}
-}
-
-// sendEvent sends an individual event to the Aptabase API.
-func (c *Client) sendEvent(event map[string]interface{}) error {
-	data, err := json.Marshal(event)
-	if err != nil {
-		log.Printf("Error marshaling event data: %v", err)
 		return err
 	}
 
 	req, err := http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(data))
 	if err != nil {
-		log.Printf("Error creating request: %v", err)
 		return err
 	}
 
@@ -169,41 +166,38 @@ func (c *Client) sendEvent(event map[string]interface{}) error {
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		log.Printf("Error sending request: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
 
-	// Read response body for additional context
 	respBody, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode >= 300 {
-		log.Printf("TrackEvent failed with status code %d: %s", resp.StatusCode, string(respBody))
-		return fmt.Errorf("failed with status code %d: %s", resp.StatusCode, string(respBody))
+		log.Printf("TrackEvent failed with status code %d: %v", resp.StatusCode, respBody)
+		return nil
 	}
 
-	log.Println("Event tracked successfully!")
+	log.Println("Events tracked successfully!")
 	return nil
 }
 
-// systemProps retrieves system information using the osinfo package.
-func systemProps() (map[string]interface{}, error) {
+// systemProps retrieves system information using the osinfo package,
+// and includes Client-specific details like AppVersion, AppBuildNumber, and DebugMode.
+func (c *Client) systemProps() (map[string]interface{}, error) {
 	osName, osVersion := osinfo.GetOSInfo()
 
 	props := map[string]interface{}{
-		"isDebug":        false, // Set to true if in debug mode
+		"isDebug":        c.DebugMode,
 		"osName":         osName,
 		"osVersion":      osVersion,
-		"locale":         "en_US",       // You can update this as needed
-		"appVersion":     "1.0.0",             // Replace with actual app version
-		"appBuildNumber": "100",               // Replace with actual build number
-		"sdkVersion":     "go-aptabase@0.0.0", // Assuming SDK version is available in sysInfo
+		"engineName":	  "go",
+		"engineVersion":   runtime.Version(),
+		"locale":         locale.GetLocale(),
+		"appVersion":     c.AppVersion,
+		"appBuildNumber": c.AppBuildNumber,
+		// TODO: Embed VERSION file into code...
+		"sdkVersion":     "go-aptabase@0.0.0",
 	}
 
 	return props, nil
-}
-
-// Helper function to check if a substring exists in a string
-func contains(s, substr string) bool {
-	return strings.Contains(s, substr)
 }
