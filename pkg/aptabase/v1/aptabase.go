@@ -152,11 +152,14 @@ func (c *Client) sendEvents(events []EventData) error {
 		return err
 	}
 
+	// Prepare the batch of events
 	var batch []map[string]interface{}
 	for _, event := range events {
 		if c.DebugMode {
-			fmt.Printf("Event: %s\nData: %v\nSystemProps: %v", event.EventName, event.Props, systemProps)
+			log.Printf("Event: %s\nData: %v\nSystemProps: %v", event.EventName, event.Props, systemProps)
 		}
+
+		// Add event to the batch
 		batch = append(batch, map[string]interface{}{
 			"timestamp":   time.Now().UTC().Format(time.RFC3339),
 			"sessionId":   c.EvalSessionID(),
@@ -166,11 +169,15 @@ func (c *Client) sendEvents(events []EventData) error {
 		})
 	}
 
-	data, err := json.Marshal(batch)
+	// Marshal the batch of events into JSON
+	data, err := json.MarshalIndent(batch, "", "  ") // Use json.MarshalIndent for pretty printing
 	if err != nil {
+		log.Printf("Error marshalling event data: %v\n", err)
 		return err
 	}
-	fmt.Printf("Sending data: %v", data)
+
+	// Log the request data cleanly
+	log.Printf("Sending data:\n%s", string(data))
 	req, err := http.NewRequest("POST", c.BaseURL+"/api/v0/events", bytes.NewBuffer(data))
 	if err != nil {
 		return err
