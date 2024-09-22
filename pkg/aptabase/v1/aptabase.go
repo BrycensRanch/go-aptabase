@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -214,14 +215,15 @@ func (c *Client) systemProps() (map[string]interface{}, error) {
 	osName, osVersion := osinfo.GetOSInfo()
 
 	props := map[string]interface{}{
-		"isDebug":        c.DebugMode,
-		"osName":         osName,
-		"osVersion":      osVersion,
-		"engineName":     "go",
-		"engineVersion":  runtime.Version(),
-		"locale":         locale.GetLocale(),
-		"appVersion":     c.AppVersion,
-		"appBuildNumber": c.AppBuildNumber,
+		"isDebug":       c.DebugMode,
+		"osName":        osName,
+		"osVersion":     osVersion,
+		"engineName":    "go",
+		"engineVersion": runtime.Version(),
+		"locale":        locale.GetLocale(),
+		"appVersion":    c.AppVersion,
+		// The API wants a string... LOL
+		"appBuildNumber": strconv.FormatUint(c.AppBuildNumber, 10),
 		// TODO: Embed VERSION file into code...
 		"sdkVersion": "go-aptabase@0.0.0",
 	}
