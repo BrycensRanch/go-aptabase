@@ -184,7 +184,12 @@ func (c *Client) sendEvents(events []EventData) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(resp.Body)
 
 	respBody, _ := io.ReadAll(resp.Body)
 	respJSON, _ := json.Marshal(respBody)
