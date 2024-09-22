@@ -45,6 +45,7 @@ type Client struct {
 	AppBuildNumber uint64
 	DebugMode      bool
 	quitChan       chan struct{}
+	wg             sync.WaitGroup
 }
 
 // NewClient creates a new Client with the specified parameters.
@@ -114,8 +115,9 @@ func (c *Client) processQueue() {
 			log.Printf("processQueue received event: %+v", event)
 			batch = append(batch, event)
 			log.Printf("processQueue has current batch: %v", batch)
-			if len(batch) > 10 {
+			if len(batch) >= 10 {
 				// Batch is full, send it
+				c.wg.Add(1)
 				go func() {
 					err := c.sendEvents(batch)
 					if err != nil {
@@ -128,6 +130,7 @@ func (c *Client) processQueue() {
 			log.Printf("processQueue received quitChan")
 			// Drain any remaining events before exiting
 			if len(batch) > 0 {
+				c.wg.Add(1)
 				go func() {
 					err := c.sendEvents(batch)
 					if err != nil {
