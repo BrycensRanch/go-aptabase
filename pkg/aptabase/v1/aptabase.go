@@ -113,6 +113,7 @@ func (c *Client) processQueue() {
 		case event := <-c.eventChan:
 			log.Printf("processQueue received event: %+v", event)
 			batch = append(batch, event)
+			log.Printf("processQueue has current batch: %v", batch)
 			// Batch is full, send it
 			go func() {
 				err := c.sendEvents(batch)
