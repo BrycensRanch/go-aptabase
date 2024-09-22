@@ -9,18 +9,16 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-
 func GetOSInfo() (string, string) {
 	return "Windows", getWindowsVersion()
 }
 
-
 // getWindowsVersion retrieves the Windows version information.
 func getWindowsVersion() string {
-	var versionInfo windows.OsVersionInfoEx
+	MajorVersion, MinorVersion, BuildNumber := windows.RtlGetNtVersionNumbers()
 
 	// Construct version string (major.minor.build)
-	return formatVersion(versionInfo.MajorVersion, versionInfo.MinorVersion, versionInfo.BuildNumber)
+	return formatVersion(MajorVersion, MinorVersion, BuildNumber)
 }
 
 // formatVersion formats the version number into a string.
