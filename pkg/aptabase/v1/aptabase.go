@@ -147,7 +147,7 @@ func (c *Client) processQueue() {
 			c.wg.Wait()
 			log.Printf("processQueue stopped")
 			return
-		case <-time.After(100 * time.Millisecond): // Add a short timeout to avoid blocking indefinitely
+		case <-time.After(500 * time.Millisecond): // Add a short timeout to avoid blocking indefinitely
 			// This ensures we periodically wake up to check for quit signals
 		}
 	}
