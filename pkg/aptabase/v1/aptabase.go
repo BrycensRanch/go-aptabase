@@ -196,15 +196,23 @@ func (c *Client) sendEvents(events []EventData) error {
 
 // TrackEvent queues an event with the specified EventData for tracking.
 func (c *Client) TrackEvent(event EventData) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+    c.mu.Lock()
+    defer c.mu.Unlock()
 
-	log.Printf("Queuing event: %s\nEvent data: %v", event.EventName, event.Props)
-	c.eventQueue = append(c.eventQueue, event)
+    c.eventQueue = append(c.eventQueue, event)
 
-	if len(c.eventQueue) > 1000 { // Example limit, adjust as needed
-		log.Println("Event queue size exceeds limit, consider sending events.")
-	}
+    // Optionally, you can send the event immediately or after a certain condition
+        batch := make([]EventData, len(c.eventQueue))
+        copy(batch, c.eventQueue)
+        c.eventQueue = []EventData{} // Clear the queue
+
+        go func() {
+            // Send the batch as a slice
+            err := c.sendEvents(batch)
+            if err != nil {
+                log.Printf("Error sending events: %v", err)
+            }
+        }()
 }
 
 // systemProps retrieves system information using the osinfo package,
