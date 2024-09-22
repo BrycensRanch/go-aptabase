@@ -157,6 +157,7 @@ func (c *Client) processQueue() {
 func (c *Client) Stop() {
 	log.Println("Stop called")
 	close(c.quitChan)
+	c.wg.Wait()
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
