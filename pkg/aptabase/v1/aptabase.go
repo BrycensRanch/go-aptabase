@@ -186,16 +186,31 @@ func (c *Client) sendEvents(events []EventData) error {
 		return err
 	}
 	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			panic(err)
+		if err := Body.Close(); err != nil {
+			log.Printf("Error closing response body: %v", err)
 		}
 	}(resp.Body)
 
-	respBody, _ := io.ReadAll(resp.Body)
-	respJSON, _ := json.Marshal(respBody)
+	// Read the response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+		return err
+	}
+
+	// Try to unmarshal the response body if it's in JSON format
+	var respJSON map[string]interface{}
+	err = json.Unmarshal(respBody, &respJSON)
+	if err != nil {
+		// If the response body isn't valid JSON, log the raw body instead
+		log.Printf("Failed to unmarshal response body, logging raw body: %s", string(respBody))
+		respJSON = map[string]interface{}{"raw_body": string(respBody)} // Store raw body as fallback for logging
+	}
+
 	if resp.StatusCode >= 300 {
-		log.Printf("TrackEvent failed with status code %d at %s: %v", resp.StatusCode, resp.Request.URL, respJSON)
+		// Marshal the JSON (or raw body) back to a string for logging
+		respJSONBytes, _ := json.Marshal(respJSON)
+		log.Printf("TrackEvent failed with status code %d at %s: %s", resp.StatusCode, resp.Request.URL, respJSONBytes)
 		return nil
 	}
 
