@@ -177,6 +177,7 @@ func (c *Client) sendEvents(events []EventData) error {
 	}
 	if string(data) == "null" {
 		log.Printf("Event data is null!! Bug?\n")
+		log.Printf("Batch %v", batch)
 		return nil
 	}
 	// Log the request data cleanly
