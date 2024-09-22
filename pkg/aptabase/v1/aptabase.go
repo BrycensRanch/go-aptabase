@@ -167,8 +167,11 @@ func (c *Client) processQueue() {
 func (c *Client) Stop() {
 	log.Println("Stop called")
 	c.wg.Wait()
+	log.Printf("I am DONE WAITING!")
 	c.Quit = true
 	close(c.quitChan)
+	c.wg.Wait()
+	// for good measure!
 	c.processQueue()
 }
 
