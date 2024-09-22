@@ -122,7 +122,6 @@ func (c *Client) processQueue() {
 				// Batch is full, send it
 				c.wg.Add(1)
 				go func(batchToSend []EventData) {
-					defer c.wg.Done()
 					err := c.sendEvents(batchToSend)
 					if err != nil {
 						log.Printf("Error sending events: %v", err)
@@ -134,10 +133,9 @@ func (c *Client) processQueue() {
 			log.Printf("processQueue received quitChan")
 
 			// Send any remaining events before exiting
-			if len(batch) > 0 || c.Quit {
+			if len(batch) > 0 {
 				c.wg.Add(1)
 				go func(batchToSend []EventData) {
-					defer c.wg.Done()
 					err := c.sendEvents(batchToSend)
 					if err != nil {
 						log.Printf("Error sending remaining events: %v", err)
@@ -166,6 +164,7 @@ func (c *Client) Stop() {
 
 // sendEvents sends a batch of events to the tracking service in a single request.
 func (c *Client) sendEvents(events []EventData) error {
+	defer c.wg.Done()
 	systemProps, err := c.systemProps()
 	if err != nil {
 		log.Printf("Error getting system properties: %v\n", err)
