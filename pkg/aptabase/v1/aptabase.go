@@ -198,7 +198,12 @@ func (c *Client) TrackEvent(event EventData) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	log.Printf("Queuing event: %s", event.EventName)
 	c.eventQueue = append(c.eventQueue, event)
+
+	if len(c.eventQueue) > 1000 { // Example limit, adjust as needed
+		log.Println("Event queue size exceeds limit, consider sending events.")
+	}
 }
 
 // systemProps retrieves system information using the osinfo package,
