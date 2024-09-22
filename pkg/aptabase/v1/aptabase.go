@@ -105,7 +105,6 @@ func (c *Client) EvalSessionID() string {
 }
 
 // processQueue processes the queued events periodically, batching them into a single request.
-
 func (c *Client) processQueue() {
 	log.Printf("processQueue started")
 	batch := make([]EventData, 0, 10) // Pre-allocate a slice to hold up to 10 events
@@ -137,6 +136,9 @@ func (c *Client) processQueue() {
 				}()
 			}
 			return
+		default:
+			// Add some logic here, e.g., log a message or exit after a timeout
+			log.Println("processQueue: no events or quit signal received yet...")
 		}
 	}
 }
