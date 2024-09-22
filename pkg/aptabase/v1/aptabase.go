@@ -175,7 +175,10 @@ func (c *Client) sendEvents(events []EventData) error {
 		log.Printf("Error marshalling event data: %v\n", err)
 		return err
 	}
-
+	if string(data) == "null" {
+		log.Printf("Event data is null!! Bug?\n")
+		return nil
+	}
 	// Log the request data cleanly
 	log.Printf("Sending data:\n%s", string(data))
 	req, err := http.NewRequest("POST", c.BaseURL+"/api/v0/events", bytes.NewBuffer(data))

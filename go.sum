@@ -58,6 +58,8 @@ github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922152220-f2a77cb61d80 h1:gs
 github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922152220-f2a77cb61d80/go.mod h1:7XDIfmemqgJG4q6l/AyIVCmVB+0oxRCI3TAB1VcN0B8=
 github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922152637-4100cbef752d h1:yMdibYljP1q+6WkHmPpsbeD7YVIAcyBdPTeiatecgcc=
 github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922152637-4100cbef752d/go.mod h1:7XDIfmemqgJG4q6l/AyIVCmVB+0oxRCI3TAB1VcN0B8=
+github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922152846-63890160ccd0 h1:g63UxukCtzt7fuXmo68lt3gjzJgSUuXn2hCVzfmtW3M=
+github.com/brycensranch/go-aptabase/pkg v0.0.0-20240922152846-63890160ccd0/go.mod h1:7XDIfmemqgJG4q6l/AyIVCmVB+0oxRCI3TAB1VcN0B8=
 golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 h1:e66Fs6Z+fZTbFBAxKfP3PALWBtpfqks2bwGcexMxgtk=
 golang.org/x/exp v0.0.0-20240909161429-701f63a606c0/go.mod h1:2TbTHSBQa924w8M6Xs1QcRcFwyucIwBGpK1p2f1YFFY=
 golang.org/x/sys v0.25.0 h1:r+8e+loiHxRqhXVl6ML1nO3l1+oFoWbnlu2Ehimmi34=
