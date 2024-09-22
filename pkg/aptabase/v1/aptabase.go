@@ -171,7 +171,6 @@ func (c *Client) Stop() {
 	c.Quit = true
 	c.wg.Wait()
 	// for good measure!
-	go c.processQueue()
 	log.Printf("UNTIL ALL ARE ONE!!!")
 	c.wg.Wait()
 	log.Printf("I have finished waiting for all goroutines, the end of days is here.")
