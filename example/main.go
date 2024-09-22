@@ -26,4 +26,7 @@ func main() {
 		},
 	}
 	client.TrackEvent(event)
+	
+	// You need to flush all the events at the end of your application otherwise they will not be sent.
+	client.Stop()
 }

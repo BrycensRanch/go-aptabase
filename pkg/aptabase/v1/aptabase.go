@@ -139,6 +139,7 @@ func (c *Client) sendQueuedEvents() {
 // Stop gracefully stops the event processing and sends any remaining events.
 func (c *Client) Stop() {
 	close(c.quitChan)
+	c.sendQueuedEvents() // Send any remaining events
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
