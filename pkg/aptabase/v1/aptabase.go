@@ -166,10 +166,9 @@ func (c *Client) processQueue() {
 // Stop gracefully stops the event processing and sends any remaining events.
 func (c *Client) Stop() {
 	log.Println("Stop called")
-	c.wg.Wait()
-	log.Printf("I am DONE WAITING!")
 	c.Quit = true
 	c.wg.Wait()
+	log.Printf("I am DONE WAITING!")
 	// for good measure!
 	log.Printf("UNTIL ALL ARE ONE!!!")
 	c.wg.Wait()
