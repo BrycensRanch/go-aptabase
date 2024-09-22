@@ -46,6 +46,7 @@ type Client struct {
 	DebugMode      bool
 	quitChan       chan struct{}
 	wg             sync.WaitGroup
+	Quit           bool
 }
 
 // NewClient creates a new Client with the specified parameters.
@@ -59,6 +60,7 @@ func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool,
 		AppBuildNumber: appBuildNumber,
 		DebugMode:      debugMode,
 		quitChan:       make(chan struct{}),
+		Quit:           false,
 	}
 
 	client.BaseURL = client.determineHost(apiKey)
@@ -116,7 +118,7 @@ func (c *Client) processQueue() {
 			batch = append(batch, event)
 			log.Printf("processQueue has current batch: %v", batch)
 
-			if len(batch) >= 10 {
+			if len(batch) >= 10 || c.Quit {
 				// Batch is full, send it
 				c.wg.Add(1)
 				go func(batchToSend []EventData) {
@@ -147,7 +149,7 @@ func (c *Client) processQueue() {
 			c.wg.Wait()
 			log.Printf("processQueue stopped")
 			return
-		case <-time.After(500 * time.Millisecond): // Add a short timeout to avoid blocking indefinitely
+		case <-time.After(100 * time.Millisecond): // Add a short timeout to avoid blocking indefinitely
 			// This ensures we periodically wake up to check for quit signals
 		}
 	}
@@ -158,6 +160,7 @@ func (c *Client) Stop() {
 	log.Println("Stop called")
 	close(c.quitChan)
 	c.wg.Wait()
+	c.Quit = true
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
