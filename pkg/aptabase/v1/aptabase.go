@@ -149,6 +149,16 @@ func (c *Client) processQueue() {
 			return
 		case <-time.After(100 * time.Millisecond): // Add a short timeout to avoid blocking indefinitely
 			// This ensures we periodically wake up to check for quit signals
+			if c.Quit && len(batch) > 0 {
+				c.wg.Add(1)
+				go func(batchToSend []EventData) {
+					err := c.sendEvents(batchToSend)
+					if err != nil {
+						log.Printf("Error sending events during quit: %v", err)
+					}
+				}(batch)
+				batch = make([]EventData, 0, 10)
+			}
 		}
 	}
 }
