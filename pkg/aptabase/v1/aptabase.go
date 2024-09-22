@@ -32,33 +32,31 @@ type EventData struct {
 
 // Client represents a tracking client.
 type Client struct {
-	APIKey           string
-	BaseURL          string
-	HTTPClient       *http.Client
-	SessionID        string
-	LastTouch        time.Time
-	SessionTimeout   time.Duration
-	eventChan        chan EventData
-	mu               sync.Mutex
-	AppVersion       string
-	AppBuildNumber   uint64
-	DebugMode        bool
-	quitChan         chan struct{}
-	processQueueOnce sync.Once
+	APIKey         string
+	BaseURL        string
+	HTTPClient     *http.Client
+	SessionID      string
+	LastTouch      time.Time
+	SessionTimeout time.Duration
+	eventChan      chan EventData
+	mu             sync.Mutex
+	AppVersion     string
+	AppBuildNumber uint64
+	DebugMode      bool
+	quitChan       chan struct{}
 }
 
 // NewClient creates a new Client with the specified parameters.
 func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool, baseURL string) *Client {
 	client := &Client{
-		APIKey:           apiKey,
-		HTTPClient:       &http.Client{Timeout: 10 * time.Second},
-		SessionTimeout:   1 * time.Hour,
-		eventChan:        make(chan EventData, 1), // Buffered channel for events
-		AppVersion:       appVersion,
-		AppBuildNumber:   appBuildNumber,
-		DebugMode:        debugMode,
-		quitChan:         make(chan struct{}),
-		processQueueOnce: sync.Once{},
+		APIKey:         apiKey,
+		HTTPClient:     &http.Client{Timeout: 10 * time.Second},
+		SessionTimeout: 1 * time.Hour,
+		eventChan:      make(chan EventData, 10), // Buffered channel for events
+		AppVersion:     appVersion,
+		AppBuildNumber: appBuildNumber,
+		DebugMode:      debugMode,
+		quitChan:       make(chan struct{}),
 	}
 
 	client.BaseURL = client.determineHost(apiKey)
@@ -69,8 +67,6 @@ func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool,
 	client.LastTouch = time.Now().UTC()
 
 	go client.processQueue()
-
-	client.processQueueOnce.Do(client.processQueue)
 
 	log.Printf("NewClient created with APIKey=%s, BaseURL=%s, SessionID=%s", client.APIKey, client.BaseURL, client.SessionID)
 
