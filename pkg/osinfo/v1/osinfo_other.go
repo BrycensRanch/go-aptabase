@@ -21,7 +21,7 @@ func GetOSInfo() (string, string) {
 	case "freebsd":
 		return "FreeBSD", getFreeBSDVersion()
 	default:
-		return runtime.GOOS, "Unknown"
+		return runtime.GOOS, "0.0.0"
 	}
 }
 
