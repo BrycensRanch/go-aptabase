@@ -14,7 +14,7 @@ func main() {
 	apiKey := "US-your-api-key" // Replace with your actual API key
 	appVersion := "1.0.0"
 	appBuildNumber := uint64(123)
-	debugMode := false
+	debugMode := true
 
 	client := aptabase.NewClient(apiKey, appVersion, appBuildNumber, debugMode, "")
 

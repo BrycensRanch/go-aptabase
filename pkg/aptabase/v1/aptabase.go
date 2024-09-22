@@ -151,6 +151,9 @@ func (c *Client) sendEvents(events []EventData) error {
 
 	var batch []map[string]interface{}
 	for _, event := range events {
+		if c.DebugMode {
+			fmt.Printf("Event: %s\nData: %v\nSystemProps: %v", event.EventName, event.Props, systemProps)
+		}
 		batch = append(batch, map[string]interface{}{
 			"timestamp":   time.Now().UTC().Format(time.RFC3339),
 			"sessionId":   c.EvalSessionID(),

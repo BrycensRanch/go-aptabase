@@ -21,9 +21,9 @@ func (m *MockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 
 // TestNewClient verifies that a new Client is created with the correct initial values.
 func TestNewClient(t *testing.T) {
-	client := NewClient("DEV-API_KEY", "1.0.0", 42, true, "http://localhost:3000")
+	client := NewClient("A-US-LOL", "1.0.0", 42, true, "http://localhost:3000")
 
-	if client.APIKey != "DEV-API_KEY" {
+	if client.APIKey != "A-US-LOL" {
 		t.Errorf("expected APIKey to be 'API_KEY', got '%s'", client.APIKey)
 	}
 	if client.AppVersion != "1.0.0" {
@@ -35,8 +35,8 @@ func TestNewClient(t *testing.T) {
 	if client.DebugMode != true {
 		t.Errorf("expected DebugMode to be true, got false")
 	}
-	if client.BaseURL != "http://localhost:3000" {
-		t.Errorf("expected BaseURL to be 'http://localhost:3000', got '%s'", client.BaseURL)
+	if client.BaseURL != "https://us.aptabase.com" {
+		t.Errorf("expected BaseURL to be 'https://us.aptabase.com', got '%s'", client.BaseURL)
 	}
 	if client.SessionID == "" {
 		t.Errorf("expected SessionID to be set")
@@ -54,7 +54,7 @@ func TestNewClient(t *testing.T) {
 
 // TestTrackEvent verifies that TrackEvent adds the event to the queue.
 func TestTrackEvent(t *testing.T) {
-	client := NewClient("DEV-API_KEY", "1.0.0", 42, true, "http://localhost:3000")
+	client := NewClient("A-US-LOL", "1.0.0", 42, true, "http://localhost:3000")
 	event := EventData{EventName: "TestEvent", Props: map[string]interface{}{"testKey": "testValue"}}
 
 	client.TrackEvent(event)
@@ -69,7 +69,7 @@ func TestTrackEvent(t *testing.T) {
 
 // TestSendEvents verifies that the events are sent as a batch in a single HTTP request.
 func TestSendEvents(t *testing.T) {
-	client := NewClient("DEV-API_KEY", "1.0.0", 42, true, "http://localhost:3000")
+	client := NewClient("A-US-LOL", "1.0.0", 42, true, "http://localhost:3000")
 
 	mockRoundTripper := &MockRoundTripper{}
 
@@ -113,7 +113,7 @@ func TestSendEvents(t *testing.T) {
 
 // TestProcessQueue verifies that processQueue sends the batch of events.
 func TestProcessQueue(t *testing.T) {
-	client := NewClient("DEV-API_KEY", "1.0.0", 42, true, "http://localhost:3000")
+	client := NewClient("A-US-LOL", "1.0.0", 42, true, "http://localhost:3000")
 
 	mockRoundTripper := &MockRoundTripper{}
 
