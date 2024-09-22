@@ -43,6 +43,7 @@ type Client struct {
 	AppVersion     string
 	AppBuildNumber uint64
 	DebugMode      bool
+	quitChan       chan struct{}
 }
 
 // NewClient creates a new Client with the specified parameters.
@@ -55,6 +56,7 @@ func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool,
 		AppVersion:     appVersion,
 		AppBuildNumber: appBuildNumber,
 		DebugMode:      debugMode,
+		quitChan:       make(chan struct{}),
 	}
 
 	client.BaseURL = client.determineHost(apiKey)
@@ -96,38 +98,47 @@ func (c *Client) EvalSessionID() string {
 	return c.SessionID
 }
 
-// TrackEvent queues an event with the specified EventData.
-func (c *Client) TrackEvent(event EventData) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.eventQueue = append(c.eventQueue, event)
-}
-
 // processQueue processes the queued events periodically, batching them into a single request.
 func (c *Client) processQueue() {
 	ticker := time.NewTicker(10 * time.Second)
-	for range ticker.C {
-		c.mu.Lock()
+	defer ticker.Stop()
 
-		if len(c.eventQueue) == 0 {
-			c.mu.Unlock()
-			continue
-		}
-
-		// Copy and clear the event queue to avoid holding the lock too long.
-		batch := make([]EventData, len(c.eventQueue))
-		copy(batch, c.eventQueue)
-		c.eventQueue = []EventData{}
-
-		c.mu.Unlock()
-
-		// Send the batch of events in a single request.
-		err := c.sendEvents(batch)
-		if err != nil {
-			log.Printf("Failed to send events: %v", err)
+	for {
+		select {
+		case <-ticker.C:
+			c.sendQueuedEvents()
+		case <-c.quitChan:
+			// Process remaining events before quitting
+			c.sendQueuedEvents()
+			return
 		}
 	}
+}
+
+// sendQueuedEvents sends the queued events to the tracking service.
+func (c *Client) sendQueuedEvents() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if len(c.eventQueue) == 0 {
+		return
+	}
+
+	// Copy and clear the event queue
+	batch := make([]EventData, len(c.eventQueue))
+	copy(batch, c.eventQueue)
+	c.eventQueue = []EventData{}
+
+	c.mu.Unlock()
+
+	if err := c.sendEvents(batch); err != nil {
+		log.Printf("Failed to send events: %v", err)
+	}
+}
+
+// Stop gracefully stops the event processing and sends any remaining events.
+func (c *Client) Stop() {
+	close(c.quitChan)
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
@@ -138,7 +149,6 @@ func (c *Client) sendEvents(events []EventData) error {
 		return err
 	}
 
-	// Enhance each event with system properties, timestamp, and session ID
 	var batch []map[string]interface{}
 	for _, event := range events {
 		batch = append(batch, map[string]interface{}{
@@ -150,12 +160,12 @@ func (c *Client) sendEvents(events []EventData) error {
 		})
 	}
 
-	data, err := json.Marshal(batch) // Directly marshal the array of events
+	data, err := json.Marshal(batch)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/api/v0/events", bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -178,6 +188,14 @@ func (c *Client) sendEvents(events []EventData) error {
 
 	log.Println("Events tracked successfully!")
 	return nil
+}
+
+// TrackEvent queues an event with the specified EventData for tracking.
+func (c *Client) TrackEvent(event EventData) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.eventQueue = append(c.eventQueue, event)
 }
 
 // systemProps retrieves system information using the osinfo package,

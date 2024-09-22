@@ -1,8 +1,6 @@
 package example
 
 import (
-	"fmt"
-
 	"github.com/brycensranch/go-aptabase/pkg/aptabase/v1"
 )
 
@@ -12,28 +10,20 @@ type Event struct {
 }
 
 func main() {
-	client := aptabase.NewClient("your-api-key")
+	// Initialize the tracking client
+	apiKey := "US-your-api-key" // Replace with your actual API key
+	appVersion := "1.0.0"
+	appBuildNumber := uint64(123)
+	debugMode := false
 
-	// Create an event to track
-	event := Event{
-		EventName: "user_login",
-		EventParams: map[string]string{
-			"user_id": "12345",
-			"device":  "mobile",
+	client := aptabase.NewClient(apiKey, appVersion, appBuildNumber, debugMode, "")
+
+	event := aptabase.EventData{
+		EventName: "UserSignUp",
+		Props: map[string]interface{}{
+			"username": "johndoe",
+			"email":    "johndoe@example.com",
 		},
 	}
-
-	// Convert EventParams to map[string]interface{}
-	eventParams := make(map[string]interface{})
-	for k, v := range event.EventParams {
-		eventParams[k] = v
-	}
-
-	// Track the event
-	err := client.TrackEvent(event.EventName, eventParams)
-	if err != nil {
-		fmt.Printf("Error tracking event: %v\n", err)
-	} else {
-		fmt.Println("Event tracked successfully!")
-	}
+	client.TrackEvent(event)
 }
