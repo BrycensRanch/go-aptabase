@@ -161,6 +161,7 @@ func (c *Client) Stop() {
 	close(c.quitChan)
 	c.wg.Wait()
 	c.Quit = true
+	c.processQueue()
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
