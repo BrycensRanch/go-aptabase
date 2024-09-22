@@ -89,7 +89,7 @@ func (c *Client) NewSessionID() string {
 	log.Printf("NewSessionID called")
 	epochSeconds := time.Now().UTC().Unix()
 	randomNumber := rand.Intn(100000000)
-	return fmt.Sprintln("%d%08d", epochSeconds, randomNumber)
+	return fmt.Sprintf("%d%08d", epochSeconds, randomNumber)
 }
 
 // EvalSessionID evaluates and updates the session ID if the session has expired.
