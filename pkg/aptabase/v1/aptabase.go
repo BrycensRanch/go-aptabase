@@ -115,33 +115,40 @@ func (c *Client) processQueue() {
 			log.Printf("processQueue received event: %+v", event)
 			batch = append(batch, event)
 			log.Printf("processQueue has current batch: %v", batch)
+
 			if len(batch) >= 10 {
 				// Batch is full, send it
 				c.wg.Add(1)
-				go func() {
-					err := c.sendEvents(batch)
+				go func(batchToSend []EventData) {
+					defer c.wg.Done()
+					err := c.sendEvents(batchToSend)
 					if err != nil {
 						log.Printf("Error sending events: %v", err)
 					}
-				}()
-				batch = make([]EventData, 0, len(batch)) // Reset the batch for next events
+				}(batch)
+				batch = make([]EventData, 0, 10) // Reset the batch for next events
 			}
 		case <-c.quitChan:
 			log.Printf("processQueue received quitChan")
-			// Drain any remaining events before exiting
+
+			// Send any remaining events before exiting
 			if len(batch) > 0 {
 				c.wg.Add(1)
-				go func() {
-					err := c.sendEvents(batch)
+				go func(batchToSend []EventData) {
+					defer c.wg.Done()
+					err := c.sendEvents(batchToSend)
 					if err != nil {
-						log.Printf("Error sending events: %v", err)
+						log.Printf("Error sending remaining events: %v", err)
 					}
-				}()
+				}(batch)
 			}
+
+			// Wait for all goroutines to finish
 			c.wg.Wait()
 			log.Printf("processQueue stopped")
 			return
-		default:
+		case <-time.After(100 * time.Millisecond): // Add a short timeout to avoid blocking indefinitely
+			// This ensures we periodically wake up to check for quit signals
 		}
 	}
 }
