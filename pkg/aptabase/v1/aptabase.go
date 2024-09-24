@@ -169,6 +169,7 @@ func (c *Client) Stop() {
 	c.Quit = true
 	close(c.quitChan)
 	c.wg.Wait()
+	time.Sleep(2 * time.Second) // Adjust wait time as needed
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
