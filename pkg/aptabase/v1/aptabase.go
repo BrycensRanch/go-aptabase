@@ -40,7 +40,6 @@ type Client struct {
 	LastTouch      time.Time
 	SessionTimeout time.Duration
 	eventChan      chan EventData
-	mu             sync.Mutex
 	AppVersion     string
 	AppBuildNumber uint64
 	DebugMode      bool
@@ -127,8 +126,8 @@ func (c *Client) processQueue() {
 					if err != nil {
 						log.Printf("Error sending events: %v", err)
 					}
+					batch = make([]EventData, 0, 10) // Reset the batch for next events
 				}(batch)
-				batch = make([]EventData, 0, 10) // Reset the batch for next events
 			}
 		case <-c.quitChan:
 			log.Printf("processQueue received quitChan")
@@ -157,8 +156,8 @@ func (c *Client) processQueue() {
 					if err != nil {
 						log.Printf("Error sending events during quit: %v", err)
 					}
+					batch = make([]EventData, 0, 10)
 				}(batch)
-				batch = make([]EventData, 0, 10)
 			}
 		}
 	}
