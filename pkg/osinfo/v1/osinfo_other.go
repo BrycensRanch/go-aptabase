@@ -29,7 +29,7 @@ func GetOSInfo() (string, string) {
 func getLinuxInfo() (string, string) {
 	data, err := ioutil.ReadFile("/etc/os-release")
 	if err != nil {
-		return "Linux", "Unknown"
+		return "Linux", "0.0.0"
 	}
 
 	lines := strings.Split(string(data), "\n")
@@ -39,6 +39,10 @@ func getLinuxInfo() (string, string) {
 		if strings.HasPrefix(line, "NAME=") {
 			name = strings.Trim(strings.SplitN(line, "=", 2)[1], "\"")
 		} else if strings.HasPrefix(line, "VERSION=") {
+			version = strings.Trim(strings.SplitN(line, "=", 2)[1], "\"")
+		} else if strings.HasPrefix(line, "VERSION_ID=") {
+			version = strings.Trim(strings.SplitN(line, "=", 2)[1], "\"")
+		} else if strings.HasPrefix(line, "VERSION_CODENAME=") {
 			version = strings.Trim(strings.SplitN(line, "=", 2)[1], "\"")
 		}
 	}
@@ -50,7 +54,7 @@ func getLinuxInfo() (string, string) {
 func getMacOSVersion() string {
 	data, err := ioutil.ReadFile("/System/Library/CoreServices/SystemVersion.plist")
 	if err != nil {
-		return "Unknown"
+		return "0.0.0"
 	}
 
 	version := string(data)
@@ -62,7 +66,7 @@ func getMacOSVersion() string {
 		}
 	}
 
-	return "Unknown"
+	return "0.0.0"
 }
 
 // getFreeBSDVersion retrieves the FreeBSD version from the uname command.
@@ -76,7 +80,7 @@ func getFreeBSDVersion() string {
 	// Fallback to using freebsd-version command if the file is not available
 	output, err := exec.Command("freebsd-version").Output()
 	if err != nil {
-		return "Unknown"
+		return "0.0.0"
 	}
 	return strings.TrimSpace(string(output))
 }
