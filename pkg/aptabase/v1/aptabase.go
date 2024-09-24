@@ -90,6 +90,7 @@ func (c *Client) determineHost(apiKey string) string {
 // NewSessionID generates a new session ID in the format of epochInSeconds + 8 random numbers.
 func (c *Client) NewSessionID() string {
 	log.Printf("NewSessionID called")
+	rand.Seed(uint64(time.Now().UnixNano()))
 	epochSeconds := time.Now().UTC().Unix()
 	randomNumber := rand.Intn(100000000)
 	return fmt.Sprintf("%d%08d", epochSeconds, randomNumber)
