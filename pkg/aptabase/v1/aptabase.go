@@ -167,13 +167,8 @@ func (c *Client) processQueue() {
 func (c *Client) Stop() {
 	log.Println("Stop called")
 	c.Quit = true
+	close(c.quitChan)
 	c.wg.Wait()
-	log.Printf("I am DONE WAITING!")
-	// for good measure!
-	log.Printf("UNTIL ALL ARE ONE!!!")
-	c.wg.Wait()
-	log.Printf("I have finished waiting for all goroutines, the end of days is here.")
-	defer close(c.quitChan)
 }
 
 // sendEvents sends a batch of events to the tracking service in a single request.
