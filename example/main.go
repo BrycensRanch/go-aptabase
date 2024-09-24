@@ -11,7 +11,7 @@ type Event struct {
 
 func main() {
 	// Initialize the tracking client
-	apiKey := "US-your-api-key" // Replace with your actual API key
+	apiKey := "A-US-your-api-key" // Replace with your actual API key
 	appVersion := "1.0.0"
 	appBuildNumber := uint64(123)
 	debugMode := true
