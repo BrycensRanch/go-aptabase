@@ -18,7 +18,7 @@ func GetDeviceModel() (string, error) {
 	case "darwin": // macOS
 		return getMacDeviceModel()
 	case "linux":
-		return getFreeBSDDeviceModel()
+		return getLinuxDeviceModel()
 	case "freebsd":
 		return getFreeBSDDeviceModel()
 	default:
