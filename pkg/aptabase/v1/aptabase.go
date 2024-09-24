@@ -273,7 +273,10 @@ func (c *Client) TrackEvent(event EventData) {
 // and includes Client-specific details like AppVersion, AppBuildNumber, and DebugMode.
 func (c *Client) systemProps() (map[string]interface{}, error) {
 	osName, osVersion := osinfo.GetOSInfo()
-	deviceModel, _ := device.GetDeviceModel()
+	deviceModel, err := device.GetDeviceModel()
+	if err != nil {
+		log.Printf("WARNING got error trying to get device model: %v", deviceModel)
+	}
 
 	props := map[string]interface{}{
 		"isDebug":       c.DebugMode,
