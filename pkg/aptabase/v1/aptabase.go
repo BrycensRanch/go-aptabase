@@ -8,11 +8,11 @@ import (
 	"log"
 	"net/http"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/brycensranch/go-aptabase/pkg/device/v1"
 	"github.com/brycensranch/go-aptabase/pkg/locale"
 	"github.com/brycensranch/go-aptabase/pkg/osinfo/v1"
 	"golang.org/x/exp/rand"
@@ -273,6 +273,7 @@ func (c *Client) TrackEvent(event EventData) {
 // and includes Client-specific details like AppVersion, AppBuildNumber, and DebugMode.
 func (c *Client) systemProps() (map[string]interface{}, error) {
 	osName, osVersion := osinfo.GetOSInfo()
+	deviceModel, _ := device.GetDeviceModel()
 
 	props := map[string]interface{}{
 		"isDebug":       c.DebugMode,
@@ -283,7 +284,8 @@ func (c *Client) systemProps() (map[string]interface{}, error) {
 		"locale":        locale.GetLocale(),
 		"appVersion":    c.AppVersion,
 		// The API wants a string... LOL
-		"appBuildNumber": strconv.FormatUint(c.AppBuildNumber, 10),
+		"appBuildNumber": fmt.Sprintf("%v", c.AppBuildNumber),
+		"deviceModel":    deviceModel,
 		// TODO: Embed VERSION file into code...
 		"sdkVersion": "go-aptabase@0.0.0",
 	}
