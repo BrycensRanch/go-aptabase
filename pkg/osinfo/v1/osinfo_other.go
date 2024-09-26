@@ -5,7 +5,7 @@
 package osinfo
 
 import (
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -28,7 +28,7 @@ func GetOSInfo() (string, string) {
 // https://www.freedesktop.org/software/systemd/man/latest/os-release.html
 // getLinuxInfo reads the OS release information directly from the filesystem.
 func getLinuxInfo() (string, string) {
-	data, err := ioutil.ReadFile("/etc/os-release")
+	data, err := os.ReadFile("/etc/os-release")
 	if err != nil {
 		return "Linux", ""
 	}
@@ -54,7 +54,7 @@ func getLinuxInfo() (string, string) {
 // untested!
 // getMacOSVersion retrieves the macOS version from the system version file.
 func getMacOSVersion() string {
-	data, err := ioutil.ReadFile("/System/Library/CoreServices/SystemVersion.plist")
+	data, err := os.ReadFile("/System/Library/CoreServices/SystemVersion.plist")
 	if err != nil {
 		return ""
 	}
@@ -74,7 +74,7 @@ func getMacOSVersion() string {
 // getFreeBSDVersion retrieves the FreeBSD version from the uname command.
 func getFreeBSDVersion() string {
 	// Attempt to read the version from /etc/freebsd-version
-	data, err := ioutil.ReadFile("/etc/freebsd-version")
+	data, err := os.ReadFile("/etc/freebsd-version")
 	if err == nil {
 		return strings.TrimSpace(string(data))
 	}
