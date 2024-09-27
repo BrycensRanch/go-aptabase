@@ -5,10 +5,14 @@
 package osinfo
 
 import (
+	"bufio"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
+
+	"golang.org/x/sys/unix"
 )
 
 // GetOSInfo retrieves the OS name and version based on the operating system.
@@ -25,12 +29,131 @@ func GetOSInfo() (string, string) {
 	}
 }
 
+func getLinuxDistroFromProcVersion() (string, string) {
+	// Open /proc/version for reading
+	// On Firejail's default profile, this is allowed. :)
+	// This *WILL* misreport when the program is ran under something like Docker that masquerades as another Linux distribution but uses the same kernel for better performance.
+	file, err := os.Open("/proc/version")
+	if err != nil {
+		return fallbackToLinuxVersion()
+	}
+	defer file.Close()
+
+	// Read the contents of the file
+	scanner := bufio.NewScanner(file)
+	if scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.Contains(line, "Ubuntu") {
+			// There is no way of getting the Ubuntu version from /proc/version, give up.
+			// While this may be viewed as misreporting, this is *still* useful information.
+			// Why? Because Ubuntu Noble uses Kernel version 6.8.* anyone who knows Ubuntu knows this.
+			return "Ubuntu", getKernelVersion()
+		}
+		if strings.Contains(line, "WSL") {
+			if strings.Contains(line, "WSL2") {
+				return "WSL", "2"
+			} else {
+				// Guess. /shrug
+				return "WSL", "1"
+			}
+		}
+
+		// Use a regex to capture the distribution information
+		re := regexp.MustCompile(`Linux version ([^\s]+) ([^\s]+).*?(\w+)\s+(\d+\.\d+\.\d+.*)`)
+		matches := re.FindStringSubmatch(line)
+		kernel := matches[1]
+		// kernelBuilder := matches[2]
+
+		distName, distVersion := getDistributionInfo(kernel)
+		if distName != "" {
+			return distName, distVersion
+		}
+
+		return fallbackToLinuxVersion()
+	} else {
+		return fallbackToLinuxVersion()
+	}
+}
+
+func getDistributionInfo(kernelVersion string) (string, string) {
+	if strings.Contains(kernelVersion, "fc") {
+		parts := strings.Split(kernelVersion, "-")
+		for _, part := range parts {
+			if strings.HasPrefix(part, "fc") {
+				return "Fedora Linux", part
+			}
+		}
+	} else if strings.Contains(kernelVersion, "mga") {
+		// Older versions of Mageia Linux ie 6 did not suffix with a number. Likely doesn't matter because this module is go1.22+
+		parts := strings.Split(kernelVersion, "-")
+		re := regexp.MustCompile("[^0-9]")
+		versionNumber := re.ReplaceAllString(parts[2], "")
+		return "Mageia", versionNumber
+
+	} else if strings.Contains(kernelVersion, "-arch") {
+		return "Arch Linux", "rolling"
+	}
+
+	return "", ""
+}
+
+func getKernelVersion() string {
+	var uname unix.Utsname
+	err := unix.Uname(&uname)
+	if err != nil {
+		return ""
+	}
+	return string(uname.Release[:])
+}
+
+func fallbackToLinuxVersion() (string, string) {
+	return "Linux", getKernelVersion()
+}
+
+func parseLSBReleaseOrFallback() (string, string) {
+		// Execute the lsb_release command with the -a option
+		// The actual file is flaky to exist across Linux distros so we use the command instead.
+		cmd := exec.Command("lsb_release", "-a")
+		output, err := cmd.Output()
+		if err != nil {
+			return getLinuxDistroFromProcVersion()
+		}
+	
+		// Read the output line by line
+		scanner := bufio.NewScanner(strings.NewReader(string(output)))
+		var distro, version string
+		for scanner.Scan() {
+			line := scanner.Text()
+	
+			// Extract the Distribution (Distributor ID) and Version
+			if strings.HasPrefix(line, "Distributor ID:") {
+				distro = strings.TrimSpace(strings.Split(line, ":")[1])
+				if distro == "Fedora" {
+					// Consistency with the code parsing /etc/os-release
+					distro = "Fedora Linux"
+				}
+			}
+			if strings.HasPrefix(line, "Release:") {
+				version = strings.TrimSpace(strings.Split(line, ":")[1])
+			}
+		}
+	
+		if err := scanner.Err(); err != nil {
+			return getLinuxDistroFromProcVersion()
+		}
+	
+		// Return the parsed distribution name and version
+		return distro, version
+}
+
 // https://www.freedesktop.org/software/systemd/man/latest/os-release.html
 // getLinuxInfo reads the OS release information directly from the filesystem.
 func getLinuxInfo() (string, string) {
+	// Under firejail, access to /etc/os-release is denied.
 	data, err := os.ReadFile("/etc/os-release")
 	if err != nil {
-		return "Linux", ""
+		return parseLSBReleaseOrFallback()
 	}
 
 	lines := strings.Split(string(data), "\n")
