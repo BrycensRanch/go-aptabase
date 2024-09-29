@@ -175,22 +175,15 @@ func getLinuxInfo() (string, string) {
 }
 
 // untested!
-// getMacOSVersion retrieves the macOS version from the system version file.
+// getMacOSVersion retrieves the macOS version from the software version command.
 func getMacOSVersion() string {
-	data, err := os.ReadFile("/System/Library/CoreServices/SystemVersion.plist")
-	if err != nil {
-		return ""
+	cmd := exec.Command("sw_vers", p)
+	stdout, _ := cmd.StdoutPipe()
+	cmd.Start()
+	content, err := ioutil.ReadAll(stdout)
+	if err == nil {
+		return string(bytes.TrimSpace(content))
 	}
-
-	version := string(data)
-	// Extract version from plist data (this is simplified)
-	if strings.Contains(version, "ProductVersion") {
-		parts := strings.Split(version, "ProductVersion")
-		if len(parts) > 1 {
-			return strings.TrimSpace(strings.Split(parts[1], "<")[0])
-		}
-	}
-
 	return ""
 }
 
