@@ -6,6 +6,8 @@ package osinfo
 
 import (
 	"bufio"
+	"bytes"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
@@ -112,39 +114,39 @@ func fallbackToLinuxVersion() (string, string) {
 }
 
 func parseLSBReleaseOrFallback() (string, string) {
-		// Execute the lsb_release command with the -a option
-		// The actual file is flaky to exist across Linux distros so we use the command instead.
-		cmd := exec.Command("lsb_release", "-a")
-		output, err := cmd.Output()
-		if err != nil {
-			return getLinuxDistroFromProcVersion()
-		}
-	
-		// Read the output line by line
-		scanner := bufio.NewScanner(strings.NewReader(string(output)))
-		var distro, version string
-		for scanner.Scan() {
-			line := scanner.Text()
-	
-			// Extract the Distribution (Distributor ID) and Version
-			if strings.HasPrefix(line, "Distributor ID:") {
-				distro = strings.TrimSpace(strings.Split(line, ":")[1])
-				if distro == "Fedora" {
-					// Consistency with the code parsing /etc/os-release
-					distro = "Fedora Linux"
-				}
-			}
-			if strings.HasPrefix(line, "Release:") {
-				version = strings.TrimSpace(strings.Split(line, ":")[1])
+	// Execute the lsb_release command with the -a option
+	// The actual file is flaky to exist across Linux distros so we use the command instead.
+	cmd := exec.Command("lsb_release", "-a")
+	output, err := cmd.Output()
+	if err != nil {
+		return getLinuxDistroFromProcVersion()
+	}
+
+	// Read the output line by line
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	var distro, version string
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Extract the Distribution (Distributor ID) and Version
+		if strings.HasPrefix(line, "Distributor ID:") {
+			distro = strings.TrimSpace(strings.Split(line, ":")[1])
+			if distro == "Fedora" {
+				// Consistency with the code parsing /etc/os-release
+				distro = "Fedora Linux"
 			}
 		}
-	
-		if err := scanner.Err(); err != nil {
-			return getLinuxDistroFromProcVersion()
+		if strings.HasPrefix(line, "Release:") {
+			version = strings.TrimSpace(strings.Split(line, ":")[1])
 		}
-	
-		// Return the parsed distribution name and version
-		return distro, version
+	}
+
+	if err := scanner.Err(); err != nil {
+		return getLinuxDistroFromProcVersion()
+	}
+
+	// Return the parsed distribution name and version
+	return distro, version
 }
 
 // https://www.freedesktop.org/software/systemd/man/latest/os-release.html
@@ -177,7 +179,7 @@ func getLinuxInfo() (string, string) {
 // untested!
 // getMacOSVersion retrieves the macOS version from the software version command.
 func getMacOSVersion() string {
-	cmd := exec.Command("sw_vers", p)
+	cmd := exec.Command("sw_vers", "--productVersion")
 	stdout, _ := cmd.StdoutPipe()
 	cmd.Start()
 	content, err := ioutil.ReadAll(stdout)
