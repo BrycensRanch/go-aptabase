@@ -4,8 +4,11 @@
 package device
 
 import (
-	"golang.org/x/sys/windows"
+	"fmt"
+	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 func GetDeviceModel() (string, error) {
@@ -14,7 +17,7 @@ func GetDeviceModel() (string, error) {
 
 	// Step 1: First call to get the size
 	ret, _, err := procGetSystemFirmwareTable.Call(
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("ACPI"))), // Example provider signature
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("ACPI"))),   // Example provider signature
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("SMBIOS"))), // Example table ID
 		0,
 		0,
@@ -23,7 +26,7 @@ func GetDeviceModel() (string, error) {
 
 	if ret == 0 {
 		fmt.Printf("Error getting table size: %v\n", err)
-		return
+		return "", err
 	}
 
 	// Step 2: Prepare buffer based on returned size
