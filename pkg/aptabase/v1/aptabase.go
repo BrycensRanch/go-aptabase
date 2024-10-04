@@ -271,7 +271,7 @@ func (c *Client) systemProps() (map[string]interface{}, error) {
 	osName, osVersion := osinfo.GetOSInfo()
 	deviceModel, err := device.GetDeviceModel()
 	if err != nil {
-		log.Printf("WARNING got error trying to get device model: %v", deviceModel)
+		log.Printf("WARNING got error trying to get device model: %v", err)
 	}
 
 	props := map[string]interface{}{
