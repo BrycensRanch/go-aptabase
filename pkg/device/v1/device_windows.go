@@ -11,7 +11,7 @@ import (
 
 func GetDeviceModel() (string, error) {
 	// Open the registry key for the computer system
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `HARDWARE\DESCRIPTION\System`, registry.READ)
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `HARDWARE\DESCRIPTION\System\BIOS`, registry.READ)
 	if err != nil {
 		return "", fmt.Errorf("failed to open registry key: %v", err)
 	}
