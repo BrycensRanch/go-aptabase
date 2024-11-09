@@ -14,11 +14,11 @@ func GetLocale() string {
 	if locale == "" {
 		locale = os.Getenv("LANG") // Then fallback to LANG
 	}
-	if locale != "" && strings.Contains(locale, ".") {
-		locale = strings.Split(locale, ".")[0] // Remove any encoding like UTF-8
+	if locale == "" || locale == "C" || locale == "C." || locale == "C.UTF-8" {
+		return "en-US"
 	}
-	if locale == "" {
-		return "en-US" // Fallback locale
+	if strings.Contains(locale, ".") {
+		locale = strings.Split(locale, ".")[0] // Remove any encoding like UTF-8
 	}
 	return locale
 }
