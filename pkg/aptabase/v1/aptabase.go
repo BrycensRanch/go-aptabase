@@ -60,7 +60,6 @@ func (c *Client) Stop() {
 
 	c.Logger.Printf("Starting to wait for goroutines to finish.")
 
-	c.wg.Wait()
 	timeout := time.After(5 * time.Second)
 
 	// Use select to either wait for all goroutines to finish or a timeout

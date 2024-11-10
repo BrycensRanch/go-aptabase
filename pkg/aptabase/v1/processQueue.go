@@ -16,6 +16,9 @@ func (c *Client) processQueue() {
 				c.Logger.Printf("processQueue received eventChan %s", event.EventName)
 			}
 			c.handleEvent(&batch, event)
+		case <-c.quitChan:
+				c.flushBatch(&batch)
+				batch = make([]EventData, 0, 999)
 		case <-time.After(500 * time.Millisecond):
 			if c.Quit {
 				c.flushBatch(&batch)
