@@ -11,7 +11,7 @@ import (
 
 // sendEvents sends a batch of events to the tracking service in a single request.
 func (c *Client) sendEvents(events []EventData) error {
-	if (events == nil || len(events) == 0) && c.DebugMode {
+	if  len(events) == 0 && c.DebugMode {
 		c.Logger.Printf("sendEvents called with no events to send! woah")
 		return nil
 	}
@@ -58,7 +58,6 @@ func (c *Client) sendEvents(events []EventData) error {
 
 	req.Header.Set("App-Key", c.APIKey)
 	req.Header.Set("Content-Type", "application/json")
-
 	c.Logger.Printf("Sending events to %s", c.BaseURL)
 
 	resp, err := c.HTTPClient.Do(req)

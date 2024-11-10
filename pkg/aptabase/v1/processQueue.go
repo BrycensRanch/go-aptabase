@@ -12,7 +12,9 @@ func (c *Client) processQueue() {
 	for {
 		select {
 		case event := <-c.eventChan:
-			c.Logger.Printf("processQueue received eventChan %s", event.EventName)
+			if c.DebugMode {
+				c.Logger.Printf("processQueue received eventChan %s", event.EventName)
+			}
 			c.handleEvent(&batch, event)
 		case <-time.After(500 * time.Millisecond):
 			if c.Quit {
@@ -25,19 +27,14 @@ func (c *Client) processQueue() {
 
 // handleEvent processes an incoming event by appending it to the current batch.
 func (c *Client) handleEvent(batch *[]EventData, event EventData) {
-	c.Logger.Printf("processQueue received event: %+v", event)
-	*batch = append(*batch, event)
-	c.Logger.Printf("processQueue current batch: %v", *batch)
-	if len(*batch) >= 10 {
-		c.sendBatch(*batch)
-		*batch = make([]EventData, 0, 999)
+	if c.DebugMode {
+		c.Logger.Printf("processQueue received event: %+v", event)
 	}
-}
-
-// checkAndFlushBatch checks if there are any remaining events in the batch and sends them if necessary.
-func (c *Client) checkAndFlushBatch(batch *[]EventData) {
-	if c.Quit && len(*batch) > 0 {
-		c.Logger.Printf("You have held current batch: %v", *batch)
+	*batch = append(*batch, event)
+	if c.DebugMode {
+		c.Logger.Printf("processQueue current batch: %v", *batch)
+	}
+	if len(*batch) >= 10 {
 		c.sendBatch(*batch)
 		*batch = make([]EventData, 0, 999)
 	}

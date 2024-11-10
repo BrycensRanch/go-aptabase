@@ -83,6 +83,8 @@ func (c *Client) Stop() {
 
 // TrackEvent queues an event with the specified EventData for tracking.
 func (c *Client) TrackEvent(event EventData) {
-	c.Logger.Printf("TrackEvent called with event: %+v", event)
+	if c.DebugMode {
+		c.Logger.Printf("TrackEvent called with event: %+v", event)
+	}
 	c.eventChan <- event
 }
