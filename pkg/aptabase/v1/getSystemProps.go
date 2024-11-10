@@ -42,7 +42,9 @@ func (c *Client) systemProps() (map[string]interface{}, error) {
 		"deviceModel":    deviceModel,
 		"sdkVersion":     fmt.Sprintf("go-aptabase@%s", GetVersion()),
 	}
-	fmt.Printf("systemProps: %v", props)
+	if c.DebugMode {
+		c.Logger.Printf("systemProps: %v", props)
+	}
 
 	return props, nil
 }
