@@ -17,6 +17,18 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+func ReadFile(filePath string) ([]byte, error) {
+	return os.ReadFile(filePath)
+}
+func OpenFile(filePath string) (*os.File, error) {
+	return os.Open(filePath)
+}
+func Exec(cmd ...string) (*exec.Cmd) {
+	command := exec.Command(cmd[0], cmd[1:]...)
+
+	return command
+}
+
 // GetOSInfo retrieves the OS name and version based on the operating system.
 func GetOSInfo() (string, string) {
 	switch runtime.GOOS {
@@ -35,7 +47,7 @@ func getLinuxDistroFromProcVersion() (string, string) {
 	// Open /proc/version for reading
 	// On Firejail's default profile, this is allowed. :)
 	// This *WILL* misreport when the program is ran under something like Docker that masquerades as another Linux distribution but uses the same kernel for better performance.
-	file, err := os.Open("/proc/version")
+	file, err := OpenFile("/proc/version")
 	if err != nil {
 		return fallbackToLinuxVersion()
 	}
@@ -116,7 +128,7 @@ func fallbackToLinuxVersion() (string, string) {
 func parseLSBReleaseOrFallback() (string, string) {
 	// Execute the lsb_release command with the -a option
 	// The actual file is flaky to exist across Linux distros so we use the command instead.
-	cmd := exec.Command("lsb_release", "-a")
+	cmd := Exec("lsb_release", "-a")
 	output, err := cmd.Output()
 	if err != nil {
 		return getLinuxDistroFromProcVersion()
@@ -153,7 +165,7 @@ func parseLSBReleaseOrFallback() (string, string) {
 // getLinuxInfo reads the OS release information directly from the filesystem.
 func getLinuxInfo() (string, string) {
 	// Under firejail, access to /etc/os-release is denied.
-	data, err := os.ReadFile("/etc/os-release")
+	data, err := ReadFile("/etc/os-release")
 	if err != nil {
 		return parseLSBReleaseOrFallback()
 	}
@@ -179,7 +191,7 @@ func getLinuxInfo() (string, string) {
 // untested!
 // getMacOSVersion retrieves the macOS version from the software version command.
 func getMacOSVersion() string {
-	cmd := exec.Command("sw_vers", "--productVersion")
+	cmd := Exec("sw_vers", "--productVersion")
 	stdout, _ := cmd.StdoutPipe()
 	cmd.Start()
 	content, err := io.ReadAll(stdout)
@@ -192,7 +204,7 @@ func getMacOSVersion() string {
 // getFreeBSDVersion retrieves the FreeBSD version from the uname command.
 func getFreeBSDVersion() string {
 	// Attempt to read the version from /etc/freebsd-version
-	data, err := os.ReadFile("/etc/freebsd-version")
+	data, err := ReadFile("/etc/freebsd-version")
 	if err == nil {
 		return strings.TrimSpace(string(data))
 	}
