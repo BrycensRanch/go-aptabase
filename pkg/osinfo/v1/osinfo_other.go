@@ -7,7 +7,7 @@ package osinfo
 import (
 	"bufio"
 	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -182,7 +182,7 @@ func getMacOSVersion() string {
 	cmd := exec.Command("sw_vers", "--productVersion")
 	stdout, _ := cmd.StdoutPipe()
 	cmd.Start()
-	content, err := ioutil.ReadAll(stdout)
+	content, err := io.ReadAll(stdout)
 	if err == nil {
 		return string(bytes.TrimSpace(content))
 	}
