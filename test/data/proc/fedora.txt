@@ -1,0 +1,1 @@
+Linux version 6.11.9-300_tkg_icelake_preempt.fc41.x86_64 (mockbuild@d07303a4dbde4074bc59c2dbe6e4b940) (gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), GNU ld version 2.43.1-2.fc41) #1 SMP PREEMPT_DYNAMIC TKG Mon Nov 18 04:59:54 UTC 2024

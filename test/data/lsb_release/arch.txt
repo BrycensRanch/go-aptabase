@@ -1,0 +1,5 @@
+LSB Version:    n/a
+Distributor ID: Arch
+Description:    Arch Linux
+Release:        rolling
+Codename:       n/a

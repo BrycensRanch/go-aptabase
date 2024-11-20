@@ -1,0 +1,5 @@
+LSB Version:    n/a
+Distributor ID: Fedora
+Description:    Fedora Linux 41 (KDE Plasma Prerelease)
+Release:        41
+Codename:       n/a

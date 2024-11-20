@@ -1,0 +1,1 @@
+Linux Shadow-PH315-54 6.11.9-300_tkg_icelake_preempt.fc41.x86_64 #1 SMP PREEMPT_DYNAMIC TKG Mon Nov 18 04:59:54 UTC 2024 x86_64 GNU/Linux
