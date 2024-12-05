@@ -5,6 +5,6 @@ go 1.22.0
 toolchain go1.23.2
 
 require (
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
+	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
 	golang.org/x/sys v0.28.0
 )
