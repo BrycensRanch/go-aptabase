@@ -61,5 +61,6 @@ func (c *Client) flushBatch(batch *[]EventData) {
 	if len(*batch) > 0 {
 		c.Logger.Printf("Flushing events: %v", *batch)
 		c.sendBatch(*batch)
+		finishedFlushing = true;
 	}
 }

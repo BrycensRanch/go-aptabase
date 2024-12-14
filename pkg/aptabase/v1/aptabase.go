@@ -68,7 +68,9 @@ func (c *Client) Stop() {
 	go func() {
 		// Wait for all goroutines to finish
 		c.wg.Wait()
-		done <- struct{}{} // Signal that all goroutines are finished
+		if (finishedFlushing) {
+			done <- struct{}{} // Signal that all goroutines are finished
+		} 
 	}()
 
 	select {

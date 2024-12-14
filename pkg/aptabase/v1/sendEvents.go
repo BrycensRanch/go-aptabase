@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var finishedFlushing = false;
+
 // sendEvents sends a batch of events to the tracking service in a single request.
 func (c *Client) sendEvents(events []EventData) error {
 	if  len(events) == 0 && c.DebugMode {
