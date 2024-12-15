@@ -57,8 +57,7 @@ func (c *Client) Stop() {
 	c.Quit = true
 	c.quitChan <- struct{}{}
 	close(c.quitChan)
-
-	c.Logger.Printf("Starting to wait for goroutines to finish.")
+	if (c.DebugMode) { c.Logger.Printf("Starting to wait for goroutines to finish.") }
 
 	timeout := time.After(5 * time.Second)
 
@@ -75,10 +74,10 @@ func (c *Client) Stop() {
 
 	select {
 	case <-done:
-		c.Logger.Printf("Finished waiting!")
+		if (c.DebugMode) { c.Logger.Printf("Finished waiting!") }
 	case <-timeout:
 		// Timeout occurred
-		c.Logger.Println("Timeout reached before all goroutines finished.")
+		if (c.DebugMode) { c.Logger.Println("Timeout reached before all goroutines finished.") }
 	}
 }
 

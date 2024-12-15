@@ -26,7 +26,7 @@ func GetVersion() string {
 func (c *Client) systemProps() (map[string]interface{}, error) {
 	osName, osVersion := osinfo.GetOSInfo()
 	deviceModel, err := device.GetDeviceModel()
-	if err != nil {
+	if err != nil && c.DebugMode {
 		c.Logger.Printf("WARNING got error trying to get device model: %v", err)
 	}
 
