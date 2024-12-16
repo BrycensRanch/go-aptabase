@@ -25,12 +25,19 @@ type EventData struct {
 
 // determineHost selects the host URL based on the AppKey.
 func (c *Client) determineHost(apiKey string) string {
-	if strings.Contains(apiKey, "EU") {
-		return hosts["EU"]
-	} else if strings.Contains(apiKey, "DEV") {
-		return hosts["DEV"]
+	parts := strings.Split(apiKey, "-")
+	if len(parts) < 2 {
+		 panic("Invalid API Key format")
 	}
-	return hosts["US"]
+
+	regionCode := parts[1] // The second part should be the region code (e.g., "US" from "A-US-0343858461")
+
+	host, exists := hosts[regionCode]
+	if !exists {
+		panic("Host not found for region " + regionCode)
+	}
+
+	return host
 }
 
 // NewSessionID generates a new session ID in the format of epochInSeconds + 8 random numbers.

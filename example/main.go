@@ -12,13 +12,15 @@ type Event struct {
 
 func main() {
 	// Initialize the tracking client
-	apiKey := "A-US-your-api-key" // Replace with your actual API key
+	apiKey := "A-US-34040404" // Replace with your actual API key
 	appVersion := "1.0.0"
 	appBuildNumber := uint64(123)
 	debugMode := false
-
-	client := aptabase.NewClient(apiKey, appVersion, appBuildNumber, debugMode, "")
-
+	// You can change this to your self hosted Aptabase instance
+	// host := "https://aptabase.brycen.app"
+	// A empty string uses automatic detection
+	host := ""
+	client := aptabase.NewClient(apiKey, appVersion, appBuildNumber, debugMode, host)
 	event := aptabase.EventData{
 		EventName: "UserSignUp",
 		Props: map[string]interface{}{

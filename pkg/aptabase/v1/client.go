@@ -45,7 +45,6 @@ func NewClient(apiKey, appVersion string, appBuildNumber uint64, debugMode bool,
 	}
 
 	client.BaseURL = client.determineHost(apiKey)
-	// Blackhole
 	if strings.Contains(client.APIKey, "SH") {
 		client.BaseURL = baseURL
 	}
